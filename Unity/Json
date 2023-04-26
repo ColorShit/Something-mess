@@ -1,7 +1,7 @@
 //Database.json
 
 {
-  "database": [
+  "<color = blue>database</color>": [
     {
       "name": "FstPanel",
       "path": "Panel/FstPanel"
