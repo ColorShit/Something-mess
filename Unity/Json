@@ -35,8 +35,7 @@ class Database
      public Database()
      {
           string dataText = Resources.Load<TextAsset>("Database").text;
-          DataInfo infodata;
-          infodata = JsonUtility.FromJson<DataInfo>(dataText);
+          DataInfo infodata = JsonUtility.FromJson<DataInfo>(dataText);
           data = infodata.database;
           //foreach (DataAttribute item in data)
           //{
