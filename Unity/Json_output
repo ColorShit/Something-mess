@@ -3,9 +3,26 @@ public class DataInfo
 {
     public DataAttribute[] database;
 }
+
 [System.Serializable]
 public class DataAttribute
 {
     public string name;
     public string path;
+}
+
+class Database
+{
+     public Database()
+     {
+          string dataText = Resources.Load<TextAsset>("Database").text;
+          DataInfo infodata;
+          infodata = JsonUtility.FromJson<DataInfo>(dataText);
+          data = infodata.database;
+          foreach (DataAttribute item in data)
+          {
+              dataDic.Add(item.name, item.path);
+          }
+          public DataAttribute[] data;
+     }
 }
