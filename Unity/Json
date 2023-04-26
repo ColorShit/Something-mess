@@ -1,3 +1,22 @@
+//Database.json
+
+{
+  "database": [
+    {
+      "name": "FstPanel",
+      "path": "Panel/FstPanel"
+    },
+    {
+      "name": "SndPanel",
+      "path": "Panel/SndPanel"
+    },
+    {
+      "name": "TedPanel",
+      "path": "Panel/ThirdPanel"
+    }
+  ]
+}
+
 [System.Serializable]
 public class DataInfo
 {
@@ -19,10 +38,10 @@ class Database
           DataInfo infodata;
           infodata = JsonUtility.FromJson<DataInfo>(dataText);
           data = infodata.database;
-          foreach (DataAttribute item in data)
-          {
-              dataDic.Add(item.name, item.path);
-          }
-          public DataAttribute[] data;
+          //foreach (DataAttribute item in data)
+          //{
+          //   dataDic.Add(item.name, item.path);
+          //}
      }
+     public DataAttribute[] data;
 }
