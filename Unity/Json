@@ -39,7 +39,7 @@ class Database
           data = infodata.database;
           //foreach (DataAttribute item in data)
           //{
-          //   dataDic.Add(item.name, item.path);
+          //   Debug.Log(item.name + " || " + item.path);
           //}
      }
      public DataAttribute[] data;
