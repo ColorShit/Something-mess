@@ -95,24 +95,14 @@ namespace FlashStorm
 
     public class FSbase
     {
-        public FSbase()
-        {
-        }
+        public FSbase() {}
 
-        public virtual void Initial()
-        {
-        }
+        public virtual void Initial() {}
 
-        public virtual void Destory()
-        {
-        }
+        public virtual void Destory() {}
 
-        public virtual void Unenable()
-        {
-        }
+        public virtual void Unenable() {}
 
-        public virtual void Enable()
-        {
-        }
+        public virtual void Enable() {}
     }
 }
