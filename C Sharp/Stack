@@ -28,7 +28,7 @@ namespace FlashStorm
                 }
                 else
                 {
-                    stack[length - 1].Hidden();
+                    stack[length - 1].Unenable();
                     FSbase[] temStack = new FSbase[length + 1];
                     Array.Copy(stack, temStack, length);
                     temStack[length] = data;
@@ -36,7 +36,20 @@ namespace FlashStorm
                     length++;
                 }
             }
-            data.Enable();
+            data.Initial();
+        }
+
+        public void Replace(FSbase data)
+        {
+            data.Initial();
+            if (length == 0)
+            {
+                FSbase[] stack = { data };
+                length++;
+                return;
+            }
+            stack[length - 1].Destory();
+            stack[length - 1] = data; 
         }
 
         public void Pop()
@@ -44,20 +57,28 @@ namespace FlashStorm
             if (length != 0)
             {
                 length--;
-                stack[length].Unenable();
+                stack[length].Destory();
                 FSbase[] temStack = new FSbase[length];
                 Array.Copy(stack, temStack, length);
                 stack = temStack;
-                Console.WriteLine(length);
                 if (length == 0)
                     return;
-                stack[length - 1].Unhidden();
+                stack[length - 1].Enable();
             }
         }
 
         public FSbase Top()
         {
-            return stack[length - 1];
+            if (length != 0)
+               return stack[length - 1];
+            return null;
+        }
+
+        public FSbase Last()
+        {
+            if (length != 0)
+                return stack[0];
+            return null;
         }
 
         public bool Empty()
@@ -69,7 +90,6 @@ namespace FlashStorm
         {
             return length;
         }
-
     }
 
     public class FSbase
