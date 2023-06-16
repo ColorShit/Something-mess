@@ -5,6 +5,9 @@ public class DragImageBase : MonoBehaviour, IPointerUpHandler, IPointerDownHandl
 {
     bool isDrag;
     Vector3 initial;
+
+    protected float distance;
+    
     public Vector3 target;
     public void OnPointerDown(PointerEventData eventData)
     {
@@ -14,7 +17,7 @@ public class DragImageBase : MonoBehaviour, IPointerUpHandler, IPointerDownHandl
     public void OnPointerUp(PointerEventData eventData)
     {
         isDrag = false;
-        if (Vector3.Distance(target, Input.mousePosition) < 60.0f)
+        if (Vector3.Distance(target, Input.mousePosition) < distance)
         {
             OperateForth.Objsnum++;
             Destroy(gameObject);
