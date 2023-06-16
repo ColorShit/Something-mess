@@ -15,7 +15,7 @@ public class DragObj3D : MonoBehaviour, IPointerUpHandler, IPointerDownHandler, 
     //[SerializeField]
     private bool isDrag;
     //[SerializeField]
-    public bool isShow;
+    private bool isShow;
     //[SerializeField]
     private float determainDistance = 0.2f;
     //[SerializeField]
