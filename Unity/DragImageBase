@@ -33,7 +33,7 @@ public class DragImageBase : MonoBehaviour, IPointerUpHandler, IPointerDownHandl
     // Update is called once per frame
     void Update()
     {
-        if (isDrag == true)
+        if (isDrag)
         {
             this.gameObject.transform.position = Input.mousePosition;
         }
