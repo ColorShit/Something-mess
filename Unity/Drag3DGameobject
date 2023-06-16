@@ -77,16 +77,11 @@ public class DragObj3D : MonoBehaviour, IPointerUpHandler, IPointerDownHandler, 
             gameObject.transform.position = initPos;
     }
 
-    void Awake()
-    {
-         isShow = true;
-    }
-
     // Start is called before the first frame update
     void Start()
     {
         initPos = gameObject.transform.position;
-        tarPos = new Vector3(1.36f, 0.75f, 2.876f);
+        isShow = true;
         isEnter = false;
     }
 
