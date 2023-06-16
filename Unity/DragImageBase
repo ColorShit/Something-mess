@@ -3,12 +3,12 @@ using UnityEngine.EventSystems;
 
 public class DragImageBase : MonoBehaviour, IPointerUpHandler, IPointerDownHandler
 {
-    bool isDrag;
-    Vector3 initial;
+    private bool isDrag;
+    private/protected Vector3 initial;
 
-    protected float distance;
-    
-    public Vector3 target;
+    protected/public float distance;
+    protected/public Vector3 target;
+
     public void OnPointerDown(PointerEventData eventData)
     {
         isDrag = true;
