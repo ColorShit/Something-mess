@@ -1,0 +1,41 @@
+using UnityEngine;
+using UnityEngine.EventSystems;
+
+public class DragImageBase : MonoBehaviour, IPointerUpHandler, IPointerDownHandler
+{
+    bool isDrag;
+    Vector3 initial;
+    public Vector3 target;
+    public void OnPointerDown(PointerEventData eventData)
+    {
+        isDrag = true;
+    }
+
+    public void OnPointerUp(PointerEventData eventData)
+    {
+        isDrag = false;
+        if (Vector3.Distance(target, Input.mousePosition) < 60.0f)
+        {
+            OperateForth.Objsnum++;
+            Destroy(gameObject);
+            //transform.position = target;
+        }
+        else
+            transform.position = initial;
+    }
+
+    // Start is called before the first frame update
+    void Start()
+    {
+        initial = transform.position;
+    }
+
+    // Update is called once per frame
+    void Update()
+    {
+        if (isDrag == true)
+        {
+            this.gameObject.transform.position = Input.mousePosition;
+        }
+    }
+}
