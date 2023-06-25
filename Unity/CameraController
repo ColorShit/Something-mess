@@ -33,19 +33,18 @@ public class CameraController : MonoBehaviour
             SetPos(pos);
             SetFov(fov);
         }
-
         public void CameraTranslate(Vector3 pos, Vector3 rot)
         {
             SetPos(pos);
             SetRot(rot);
         }
-
         public void CameraTranslate(Vector3 pos, Vector3 rot, float fov)
         {
             SetPos(pos);
             SetFov(fov);
             SetRot(rot);
         }
+
         private void SetPos(Vector3 pos)
         {
             tarPos = pos;
