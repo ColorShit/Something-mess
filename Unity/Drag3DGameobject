@@ -1,10 +1,14 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-public class DragObj3D : MonoBehaviour, IPointerUpHandler, IPointerDownHandler, IPointerEnterHandler, IPointerExitHandler
+public enum Property
 {
-    
+    can,
+    cannot
+}
 
+public class Drog3DgameObject : MonoBehaviour, IPointerUpHandler, IPointerDownHandler, IPointerEnterHandler, IPointerExitHandler
+{
     #region Drag Information
     public GameObject tarObj;
     public Property property;
@@ -22,26 +26,11 @@ public class DragObj3D : MonoBehaviour, IPointerUpHandler, IPointerDownHandler, 
     private bool isEnter;
     #endregion
 
-    #region touch information
-    public static GameObject image;
-    public static GameObject tipImg;
-
-    public string Name;
-
-    #endregion
-
     public void OnPointerDown(PointerEventData eventData)
     {
         isShow = false;
-        image.SetActive(false);
         if (property == Property.can)
             isDrag = true;
-        else
-        {
-            tipImg.SetActive(true);
-            Invoke("Disappear", 0.5f);
-        }
-
     }
 
     public void OnPointerEnter(PointerEventData eventData)
@@ -49,16 +38,12 @@ public class DragObj3D : MonoBehaviour, IPointerUpHandler, IPointerDownHandler, 
         if (!isEnter && isShow)
         {
             Vector3 temp = Camera.main.WorldToScreenPoint(gameObject.transform.position);
-            image.transform.position = new Vector3(temp.x, temp.y + 64.0f, temp.z);
-            image.GetComponentInChildren<TMPro.TextMeshProUGUI>().text = Name;
-            image.SetActive(true);
             isEnter = true;
         }
     }
 
     public void OnPointerExit(PointerEventData eventData)
     {
-        image.gameObject.SetActive(false);
         isEnter = false;
     }
 
@@ -90,16 +75,5 @@ public class DragObj3D : MonoBehaviour, IPointerUpHandler, IPointerDownHandler, 
     {
         if (isDrag)
             gameObject.transform.position = Camera.main.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, 0.7f));
-    }
-
-    void Disappear()
-    {
-        tipImg.SetActive(false);
-    }
-
-    public enum Property
-    {
-        can,
-        cannot
     }
 }
