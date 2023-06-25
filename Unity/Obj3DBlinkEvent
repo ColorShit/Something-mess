@@ -1,0 +1,82 @@
+using UnityEngine;
+using UnityEngine.EventSystems;
+using EPOOutline;
+using System.Collections;
+
+public class ObjBlink : MonoBehaviour, IPointerClickHandler
+{
+    public FlashStorm.normalClickOperator clickOperate;
+
+    [SerializeField]
+    private Outlinable outlinable;
+    [SerializeField]
+    private Collider collider;
+    [SerializeField]
+    private Color color;
+
+    public float blinkSpeed = 1.0f;
+    public float alphaValue = 1;
+    public bool blinkVector = false;
+
+    // Start is called before the first frame update
+    void Start()
+    {
+        outlinable = gameObject.GetComponent<Outlinable>();
+        collider = gameObject.GetComponent<Collider>();
+        color = outlinable.OutlineParameters.Color;
+    }
+
+    IEnumerator Frame()
+    {
+        while (true)
+        {
+            if (blinkVector)
+            {
+                alphaValue += Time.deltaTime * blinkSpeed;
+                outlinable.OutlineParameters.Color = new Color(
+                    color.r, color.g, color.b, alphaValue);
+                if (alphaValue > 1.0f)
+                {
+                    blinkVector = false;
+                }
+            }
+            else
+            {
+                alphaValue -= Time.deltaTime * blinkSpeed;
+                outlinable.OutlineParameters.Color = new Color(
+                    color.r, color.g, color.b, alphaValue);
+                if (alphaValue < 0.0f)
+                {
+                    blinkVector = true;
+                }
+            }
+            yield return null;
+        }
+        
+    }
+
+    public virtual void StartBlink()
+    {
+        collider.enabled = true;
+        clickOperate += StopBlink;//+= () => { Debug.Log(""); };
+        outlinable.enabled = true;
+        StartCoroutine("Frame");
+    }
+
+    public virtual void StopBlink()
+    {
+        StopCoroutine("Frame");
+        outlinable.enabled = false;
+        collider.enabled = false;
+        clickOperate = null;
+    }
+
+    public void OnPointerClick(PointerEventData eventData)
+    {
+        if (eventData.button == PointerEventData.InputButton.Left)
+        {
+            if (clickOperate != null)
+                clickOperate();
+        }
+    }
+}
