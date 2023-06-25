@@ -1,0 +1,159 @@
+using UnityEngine;
+
+public class CameraController : MonoBehaviour
+{
+        public Camera cameraMain;
+        [SerializeField]
+        private int moveSpeed = 100;
+
+        normalClickOperator computeOperator;
+        private Vector3 tarPos;
+        private Vector3 framePos;
+
+        private float tarFoV;
+        private float frameFoV;
+
+        private Vector3 initialRot;
+        private Vector3 tarRot;
+        private Vector3 frameRot;
+        private Vector3 hasRotEular = Vector3.zero;
+        private float RotX;
+        private float RotY;
+
+        public void CameraTranslate(Vector3 pos)
+        {
+            SetPos(pos);
+        }
+        public void CameraTranslate(float fov)
+        {
+            SetFov(fov);
+        }
+        public void CameraTranslate(Vector3 pos, float fov)
+        {
+            SetPos(pos);
+            SetFov(fov);
+        }
+
+        public void CameraTranslate(Vector3 pos, Vector3 rot)
+        {
+            SetPos(pos);
+            SetRot(rot);
+        }
+
+        public void CameraTranslate(Vector3 pos, Vector3 rot, float fov)
+        {
+            SetPos(pos);
+            SetFov(fov);
+            SetRot(rot);
+        }
+        private void SetPos(Vector3 pos)
+        {
+            tarPos = pos;
+            framePos = (pos - this.gameObject.transform.position) / (float)moveSpeed;
+            computeOperator += MovePos;
+        }
+        private void SetFov(float fov)
+        {
+            tarFoV = fov;
+            frameFoV = (fov - cameraMain.fieldOfView) / (float)moveSpeed;
+            computeOperator += MoveFoV;
+        }
+        private void SetRot(Vector3 rot)
+        {
+            tarRot = rot;
+            initialRot = gameObject.transform.rotation.eulerAngles;
+            TranslateRotation(ref initialRot);
+
+            frameRot = (rot - initialRot) / (float)moveSpeed;
+            hasRotEular = Vector3.zero;
+            RotX = rot.x - initialRot.x;
+            RotY = rot.y - initialRot.y;
+            computeOperator += MoveRot;
+        }
+
+        // Start is called before the first frame update
+        void Start()
+        {
+            if (cameraMain == null)
+                cameraMain = gameObject.GetComponent<Camera>();
+        }
+
+        // Update is called once per frame
+        void Update()
+        {
+            if (computeOperator != null)
+                computeOperator();
+        }
+
+        private void MovePos()
+        {
+            gameObject.transform.position += framePos;
+            if (Vector3.Distance(tarPos, gameObject.transform.position) <= 0.001f)
+            {
+                gameObject.transform.position = tarPos;
+                computeOperator -= MovePos;
+            }
+        }
+        private void MoveFoV()
+        {
+            cameraMain.fieldOfView += frameFoV;
+            if (cameraMain.fieldOfView <= tarFoV)
+            {
+                cameraMain.fieldOfView = tarFoV;
+                computeOperator -= MoveFoV;
+            }
+        }
+
+        private void MoveRot()
+        {
+            hasRotEular += frameRot;
+            gameObject.transform.rotation = Quaternion.Euler(initialRot + hasRotEular);
+            if (JudgeOutCome(hasRotEular.y, RotY) && JudgeOutCome(hasRotEular.x, RotX))
+            {
+                gameObject.transform.rotation = Quaternion.Euler(tarRot);
+                computeOperator -= MoveRot;
+            }
+        }
+
+        private bool JudgeOutCome(float x, float y)
+        {
+            if (y < 0)
+                return (x <= y) ? true : false;
+            else
+                return (x >= y) ? true : false;
+        }
+        private void TranslateRotation(ref Vector3 tarVec)
+        {
+            if (tarVec.x > 180)
+                tarVec.x = tarVec.x - 360f;
+            if (tarVec.y > 180)
+                tarVec.y = tarVec.y - 360f;
+            if (tarVec.z > 180)
+                tarVec.z = tarVec.z - 360f;
+        }
+
+        /*private void FreedomRot()
+        {
+            this.gameObject.transform.Rotate(Vector3.up * Input.GetAxis("Mouse X") * Time.deltaTime * RotSpeed, Space.World);
+            this.gameObject.transform.Rotate(-Vector3.right * Input.GetAxis("Mouse Y") * Time.deltaTime * RotSpeed, Space.Self);
+            float Yeular = this.gameObject.transform.localEulerAngles.x;
+            float Xeular = this.gameObject.transform.localEulerAngles.y;
+            float paraY;
+            if (Yeular >= 180)
+            {
+                paraY = 360f - Yeular;
+                if (paraY > num2)
+                {
+                    this.gameObject.transform.rotation = Quaternion.Euler(new Vector3(360f - num2, Xeular, 0));
+                }
+            }
+            else
+            {
+                paraY = Yeular;
+                if (paraY > num2)
+                {
+                    this.gameObject.transform.rotation = Quaternion.Euler(new Vector3(num2, Xeular, 0));
+                }
+            }
+        }*/
+}
