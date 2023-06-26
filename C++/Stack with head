@@ -1,0 +1,108 @@
+template<typename T>
+class FSList
+{
+private:
+	struct Node 
+	{
+		T data;
+		Node* next;
+
+		Node(const T& value) : data(value), next(nullptr) {}
+	};
+
+	Node* head;
+public:
+	FSList() :head(nullptr) {}
+
+	void Add(const T& value)
+	{
+		Node* temp = new Node(value);
+		if (!head)
+			head = temp;
+		else
+		{
+			Node* current = head;
+			while (current->next)
+			{
+				current = current->next;
+			}
+			current->next = temp;
+		}
+	}
+
+	void Remove(T Value)
+	{
+		Node* current = head;
+		if (current->data == Value)
+		{
+			current = head->next;
+			delete(head);
+			if (current)
+				head = current;
+			else
+				head = nullptr;
+			return;
+		}
+		while (head)
+		{
+			Node* tempData = current->next;
+			if (tempData->data == Value)
+			{
+				current->next = tempData->next;
+				delete(tempData);
+				return;
+			}
+			current = current->next;
+		}
+	}
+
+	void RemoveAll()
+	{
+		while (head)
+		{
+			Node* temp = head;
+			head = head->next;
+			delete temp;
+		}
+		head = nullptr;
+	}
+
+	int Length() 
+	{
+		if (!head)
+			return 0;
+		else
+		{
+			int temp = 1;
+			Node* tempValue = head;
+			while (tempValue->next)
+			{
+				temp++;
+				tempValue = tempValue->next;
+			}
+			return temp;
+		} 
+	}
+
+	void Print()
+	{
+		if (!head)
+			return;
+		Node* temp = head;
+		while (temp)
+		{
+			std::cout << temp->data << std::endl;
+			temp = temp->next;
+		}
+	}
+
+	~FSList()
+	{
+		while (head)
+		{
+			Node* temp = head;
+			head = head->next;
+			delete temp;
+		}
+	}
+};
