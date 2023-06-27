@@ -13,6 +13,7 @@ private:
 	Node* head;
 public:
 	FSList() :head(nullptr) {}
+        FSList(T value) { Node* temp = new Node(value); head = temp; }
 
 	void Add(const T& value)
 	{
