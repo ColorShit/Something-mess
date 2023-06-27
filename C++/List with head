@@ -1,3 +1,5 @@
+#pragma once
+#include <iostream>
 template<typename T>
 class FSList
 {
@@ -13,7 +15,18 @@ private:
 	Node* head;
 public:
 	FSList() :head(nullptr) {}
-        FSList(T value) { Node* temp = new Node(value); head = temp; }
+	FSList(T value) { Node* temp = new Node(value); head = temp; }
+
+	T& Top()
+	{
+		Node* temp = head;
+		while (temp->next)
+		{
+			temp = temp->next;
+		}
+		T&  tempRet = temp->data;
+		return tempRet;
+	}
 
 	void Add(const T& value)
 	{
@@ -59,6 +72,31 @@ public:
 		}
 	}
 
+	void RemoveTop() {
+		if (head == nullptr)
+			return;
+		if (head->next == nullptr)
+		{
+			delete head;
+			head = nullptr;
+		}
+		else
+		{
+			Node* current = head;
+			while (current)
+			{
+				Node* temp = current->next;
+				if (temp->next == nullptr)
+				{
+					delete temp;
+					current->next = nullptr;
+					return;
+				}
+				current = current->next;
+			}
+		}
+	}
+
 	void RemoveAll()
 	{
 		while (head)
@@ -84,7 +122,13 @@ public:
 				tempValue = tempValue->next;
 			}
 			return temp;
-		} 
+		}
+		 
+	}
+
+	bool Empty()
+	{
+		return (head == nullptr) ? true : false;
 	}
 
 	void Print()
