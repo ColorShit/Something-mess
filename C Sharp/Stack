@@ -68,7 +68,7 @@ namespace FlashStorm
             }
         }
 
-        public FSbase Top()
+        public FSbase Peek()
         {
             if (length != 0)
                return stack[length - 1];
