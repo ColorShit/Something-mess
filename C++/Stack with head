@@ -32,6 +32,8 @@ public:
 
 	void Remove(T Value)
 	{
+		if (head == nullptr)
+			return;
 		Node* current = head;
 		if (current->data == Value)
 		{
@@ -43,7 +45,7 @@ public:
 				head = nullptr;
 			return;
 		}
-		while (head)
+		while (current->next)
 		{
 			Node* tempData = current->next;
 			if (tempData->data == Value)
