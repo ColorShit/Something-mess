@@ -110,20 +110,14 @@ public:
 
 	int Length() 
 	{
-		if (!head)
-			return 0;
-		else
+		int temp = 0;
+		Node* tempValue = head;
+		while (tempValue)
 		{
-			int temp = 1;
-			Node* tempValue = head;
-			while (tempValue->next)
-			{
-				temp++;
-				tempValue = tempValue->next;
-			}
-			return temp;
+			temp++;
+			tempValue = tempValue->next;
 		}
-		 
+		return temp;
 	}
 
 	bool Empty()
