@@ -1,0 +1,16 @@
+void InsertionSort(int* array, int length)
+{
+	int n = 0, j, temp;
+	for (int i = 1; i < length; i++)
+	{
+		j = i - 1, temp = array[i];
+		while (j > -1 && array[j] > temp)
+		{
+			n++;
+			array[j + 1] = array[j];
+			j--;
+		}
+		array[j + 1] = temp;
+	}
+	std::cout << n << std::endl;
+}
