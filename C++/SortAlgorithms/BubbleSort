@@ -1,0 +1,21 @@
+void SelectSort(int* array, int length)
+{
+	int temp;
+	for (int i = 0; i < length; i++)
+	{
+		temp = i;
+		for (int j = i + 1; j < length; j++)
+		{
+			if (array[j] < array[temp])
+			{
+				temp = j;
+			}
+		}
+		if (i != temp)
+		{
+			int tempnum = array[i];
+			array[i] = array[temp];
+			array[temp] = tempnum;
+		}
+	}
+}
