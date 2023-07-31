@@ -7,7 +7,7 @@ void SelectSort(int* array, int length)
 		for (int j = i + 1; j < length; j++)
 		{
 			if (array[j] < array[temp])
-         temp = j;
+                           temp = j;
 		}
 		if (i != temp)
 		{
