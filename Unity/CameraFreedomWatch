@@ -2,14 +2,14 @@ using UnityEngine;
 
 public class CameraFreedomWatch : MonoBehaviour
 {
-    //put the camera gameObject into cameraNode,
+    //Put the camera gameObject into cameraNode,
     //and give it a empty gameobject as father transform.
-    //put this piece of code into the "fatherNode"
+    //Put this piece of code into the "fatherNode"
     public GameObject fatherNode;
     public Camera cameraNode;
 
     #region horizontal Rotate
-    //horizontal rotation is rotate the "fatherNode"
+    //Horizontal rotation is rotate the "fatherNode"
 
     [Range(0.1f, 10)]
     public float horizontalRotationSpeed = 2.5f;
@@ -29,7 +29,7 @@ public class CameraFreedomWatch : MonoBehaviour
     #endregion
 
     #region vertical Rotate
-    //vertical rotation is rotate the "cameraNode"
+    //Vertical rotation is rotate the "cameraNode"
 
     [Range(0.1f, 10)]
     public float verticalRotationSpeed = 2.0f;
