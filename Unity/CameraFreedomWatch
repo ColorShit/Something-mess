@@ -17,10 +17,13 @@ public class CameraFreedomWatch : MonoBehaviour
     public float horizontalRotationLimit = 0.1f;
 
     public float originalHorizontalValue { set; get; }
-    private float horizontalIntervalLeft { set; get; }//min
-    private float horizontalIntervalRight { set; get; }//max
+    // horizontal interval [left, right]
+    // Vertical is also.
+    private float horizontalIntervalLeft { set; get; }//interval of leftmost
+    private float horizontalIntervalRight { set; get; }//interval of rightmost
+
     //Maybe you can put this into the function update for making debug being easier,
-    //and vertical function "CalculateVerticalInterval" is also
+    //and vertical function "CalculateVerticalInterval" is also.
     private void CalculateHorizontalInterval()
     {
         horizontalIntervalLeft = originalHorizontalValue + 180 - horizontalRotationLimit;
