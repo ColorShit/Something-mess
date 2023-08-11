@@ -1,0 +1,84 @@
+using UnityEngine;
+
+public class CameraFreedomWatch : MonoBehaviour
+{
+    //put the camera gameObject into cameraNode,
+    //and give it a empty gameobject as father transform.
+    //put this piece of code into the "fatherNode"
+    public GameObject fatherNode;
+    public Camera cameraNode;
+
+    #region horizontal Rotate
+    //horizontal rotation is rotate the "fatherNode"
+
+    [Range(0.1f, 10)]
+    public float horizontalRotationSpeed = 2.5f;
+    [Range(0.1f, 180)]
+    public float horizontalRotationLimit = 0.1f;
+
+    public float originalHorizontalValue { set; get; }
+    private float horizontalIntervalLeft { set; get; }//min
+    private float horizontalIntervalRight { set; get; }//max
+    //Maybe you can put this into the function update for making debug being easier,
+    //and vertical function "CalculateVerticalInterval" is also
+    private void CalculateHorizontalInterval()
+    {
+        horizontalIntervalLeft = originalHorizontalValue + 180 - horizontalRotationLimit;
+        horizontalIntervalRight = horizontalIntervalLeft + 2 * horizontalRotationLimit;
+    }
+    #endregion
+
+    #region vertical Rotate
+    //vertical rotation is rotate the "cameraNode"
+
+    [Range(0.1f, 10)]
+    public float verticalRotationSpeed = 2.0f;
+    [Range(0.1f, 180)]
+    public float verticalRotationLimit = 0.1f;
+
+    [SerializeField]
+    public float originalVerticalValue { set; get; }
+    private float verticalIntervalLeft { set; get; }//min
+    private float verticalIntervalRight { set; get; }//max
+    private void CalculateVerticalInterval()
+    {
+        verticalIntervalLeft = originalVerticalValue + 180 - verticalRotationLimit;
+        verticalIntervalRight = verticalIntervalLeft + 2 * verticalRotationLimit;
+    }
+    #endregion
+
+    #region field Of View
+    [Range(1, 60)]
+    public float minFOValue;
+    [Range(60, 120)]
+    public float maxFOValue;
+    [Range(5, 25)]
+    public float FOVSpeed;
+    #endregion
+
+    //When scene is initialize, this piece of code will get the origanal data
+    private void Awake()
+    {
+        originalHorizontalValue = fatherNode.transform.eulerAngles.y;
+        originalVerticalValue = cameraNode.transform.localEulerAngles.x;
+        CalculateHorizontalInterval();
+        CalculateVerticalInterval();
+    }
+
+    void Update()
+    {
+        if (Input.GetMouseButton(0))
+        {
+            Vector3 tempHorizontal = transform.eulerAngles + new Vector3(0, horizontalRotationSpeed * Input.GetAxis("Mouse X"), 0);
+            if (!(tempHorizontal.y > horizontalIntervalLeft && tempHorizontal.y < horizontalIntervalRight))
+                fatherNode.transform.localRotation = Quaternion.Euler(tempHorizontal);
+            Vector3 tempVertical = cameraNode.transform.localEulerAngles + new Vector3(verticalRotationSpeed * -Input.GetAxis("Mouse Y"), 0, 0);
+            if (!(tempVertical.x > verticalIntervalLeft && tempVertical.x < verticalIntervalRight))
+                cameraNode.transform.localRotation = Quaternion.Euler(tempVertical);
+        }
+
+        float scrollInput = cameraNode.fieldOfView - Input.GetAxis("Mouse ScrollWheel") * FOVSpeed;
+        if (scrollInput >= minFOValue && scrollInput <= maxFOValue)
+            cameraNode.fieldOfView = scrollInput;
+    }
+}
