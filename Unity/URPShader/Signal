@@ -1,0 +1,73 @@
+Shader "Unlit/Signal"
+{
+    Properties
+    {
+        _Color("Color", color) = (1, 1, 1, 1)
+    }
+        SubShader
+    {
+        Tags { "RenderPipeline" = "UniversalPipeline" "RenderType" = "Transparent" "Queue" = "Transparent"}
+        LOD 100
+
+        HLSLINCLUDE
+        #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+
+
+        CBUFFER_START(UnityPerMaterial)
+        float4 _Color;
+        CBUFFER_END
+
+        TEXTURE2D(_MainTex);
+        SAMPLER(sampler_MainTex);
+
+        struct VertexInput
+        {
+            float4 vertex : POSITION;
+            float2 uv : TEXCOORD0;
+        };
+
+        struct VertexOutput
+        {
+            float2 uv : TEXCOORD0;
+            float4 vertex : SV_POSITION;
+        };
+
+        ENDHLSL
+
+        Pass
+        {
+            Tags { "LightMode" = "UniversalForward"}
+
+            Blend SrcAlpha OneMinusSrcAlpha
+            ZWrite Off
+
+            HLSLPROGRAM
+            #pragma vertex vert
+            #pragma fragment frag
+
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
+            #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/SpaceTransforms.hlsl"
+
+            VertexOutput vert(VertexInput i)
+            {
+                 VertexOutput o;
+                 o.vertex = TransformObjectToHClip(i.vertex.xyz);
+                 o.uv = i.uv;
+                 return o;
+            }
+
+            float4 frag(VertexOutput i) : SV_Target
+            {
+                 float4 col = _Color;
+                 float k = distance(i.uv, float2(0.5f, 0.5f));
+                 float s = clamp((sin(k * 50.0f - _Time.y * 20.0f) - 0.5f) * 4.0f, 0, 1);
+                 float vx = abs(i.uv.x - 0.5f);
+                 float vy = i.uv.y - 0.5f;
+                 float vd = step(0, vy * 2.0f - vx);
+                 return float4(1, 1, 1, clamp(s * ((0.5f - k) * 8.0f) * ((k - 0.1f) * 2.0f) * vd, 0, 1)) * col;
+            }
+            ENDHLSL
+        }
+    }
+}
