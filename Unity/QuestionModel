@@ -1,0 +1,247 @@
+using System.Collections.Generic;
+using UnityEngine;
+using FlashStorm;
+using UnityEngine.UI;
+using TMPro;
+
+public class DEPanel : MonoBehaviour
+{
+    public static int CurrentAnswerNum {  set; get; }
+    public static int qesNum { set; get; }
+    public static OptionExplain qesMain;
+
+    public Transform optionInstantiateNode;
+    public Button judgeBtn, nextBtn;
+    public EButton optionPrefab;
+    public TextMeshProUGUI topic, topicType;
+
+    [SerializeField]
+    private EButton[] optionInstantiates;
+    public ExamAnswer examAnswerTipPrefab;
+    private ExamAnswer  examAnswerTip;
+    
+    [SerializeField]
+    private int realAnswer;
+    [SerializeField]
+    private int currentAnswer;
+    private int qesType;
+
+    internal void StoreData()
+    {
+        qesNum = 10;
+        qesMain.topics = new string[] {
+            "", "", "", "", "", "", "", "", "", ""
+        };
+        //A : 1, B : 2, C : 4, D = 8
+        qesMain.answers = new int[] { 7, 3, 1, 2, 4, 8, 4, 2, 2, 8 };
+        //0 ：single， 1 ： multiply， 2 : judgement
+        qesMain.type = new int[] { 1, 1, 0, 0, 0, 0, 0, 0, 0, 0 };
+        qesMain.options = new OptionNode[qesNum];
+        qesMain.options[0].SaveOption(5, new string[] { "","","","","" });
+        qesMain.options[1].SaveOption(4, new string[] { "","","","" });
+        qesMain.options[2].SaveOption(4, new string[] { "","","","" });
+        qesMain.options[3].SaveOption(4, new string[] { "","","","" });
+        qesMain.options[4].SaveOption(4, new string[] { "","","","" });
+        qesMain.options[5].SaveOption(4, new string[] { "","","","" });
+        qesMain.options[6].SaveOption(4, new string[] { "","","","" });
+        qesMain.options[7].SaveOption(4, new string[] { "","","","" });
+        qesMain.options[8].SaveOption(4, new string[] { "","","","" });
+        qesMain.options[9].SaveOption(4, new string[] { "","","","" });
+    }
+
+    internal void ReadQuestion()
+    {
+        topic.text = qesMain.topics[CurrentAnswerNum];
+        switch (qesMain.type[CurrentAnswerNum])
+        {
+            case 1:
+                topicType.text = "single";
+                break;
+            case 0:
+                topicType.text = "multiply";
+                break;
+            case 2:
+                topicType.text = "judgement";
+                break;
+            default:
+                break;
+        }
+        optionInstantiates = new EButton[qesMain.options[CurrentAnswerNum].num];
+        int temp = 1;
+        for (int i = 0; i < qesMain.options[CurrentAnswerNum].num; i++)
+        {
+            EButton tempBtn = Instantiate(optionPrefab, optionInstantiateNode);
+            optionInstantiates[i] = tempBtn;
+            tempBtn.text.text = qesMain.options[CurrentAnswerNum].option[i];
+            int x = temp;
+            optionInstantiates[i].onClick += () => SelectAnswer(x);
+            temp *= 2;
+        }
+        realAnswer = qesMain.answers[CurrentAnswerNum];
+        qesType = qesMain.type[CurrentAnswerNum];
+        currentAnswer = 0;
+    }
+
+    internal void ReadyReadQuestion(int n)
+    {
+        for (int i = 0; i < optionInstantiates.Length; i++)
+        {
+            Destroy(optionInstantiates[i].gameObject);
+        }
+        Destroy(examAnswerTip.gameObject);
+        examAnswerTip = null;
+        nextBtn.gameObject.SetActive(false);
+        judgeBtn.gameObject.SetActive(true);
+        optionInstantiates = null;
+        CurrentAnswerNum = n;
+        ReadQuestion();
+    }
+
+    internal void SelectAnswer(int num)
+    {
+        if (qesType == 1)
+        {
+            int x = currentAnswer % (num * 2) - num;
+            currentAnswer += (x < 0) ? num : -num;
+        }
+        else
+        {
+            int m = 1, i = 0;
+            while (m < currentAnswer)
+            {
+                i++; m *= 2;
+            }
+            if (currentAnswer != 0)
+                optionInstantiates[i].ExitClick();
+            if (currentAnswer == num)
+                currentAnswer = 0;
+            else
+                currentAnswer = num;
+        }
+    }
+
+    internal bool JudgeUIOperate()
+    {
+        for (int i = 0; i < optionInstantiates.Length; i++)
+        {
+            optionInstantiates[i].enabled = false;
+        }
+        if (currentAnswer == realAnswer)
+        {
+            ExamAnswerOperate(true);
+            return true;
+        }
+        else
+        {
+            ExamAnswerOperate(false);
+            return false;
+        }
+    }
+
+    private void ExamAnswerOperate(bool answer)
+    {
+        int n = 0, m = 1;
+        if (qesType == 1)
+        {
+            List<int> tempList = new List<int>();
+            while (n < optionInstantiates.Length)
+            {
+                if (realAnswer % (m * 2) >= m)
+                {
+                    tempList.Add(n);
+                }
+                n++;
+                m *= 2;
+            }
+            int[] tempArray = new int[tempList.Count];
+            int i = 0;
+            foreach (int item in tempList)
+            {
+                tempArray[i] = item;
+                i++;
+            }
+            examAnswerTip = Instantiate(examAnswerTipPrefab, optionInstantiateNode);
+            examAnswerTip.ChangeRightAnswerTip(answer, tempArray);
+        }
+        else
+        {
+            while (n < optionInstantiates.Length)
+            {
+                if (m == realAnswer)
+                    break;
+                n++; m *= 2;
+            }
+            examAnswerTip = Instantiate(examAnswerTipPrefab, optionInstantiateNode);
+            examAnswerTip.ChangeRightAnswerTip(answer, n);
+        }
+    }
+}
+
+}
+
+using UnityEngine;
+using UnityEngine.EventSystems;
+
+//Exam Option Button
+public class EButton : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler
+{
+    public Sprite selSprite, norSprite;
+    public Color selectColor, normalColor, enterColor;
+    public UnityEngine.UI.Image image;
+    public TMPro.TextMeshProUGUI text;
+    private bool isClick;
+    public FlashStorm.FSAction onClick;
+    private void Awake()
+    {
+        if (!image)
+            image = GetComponentInChildren<UnityEngine.UI.Image>();
+        if (!text)
+            text = GetComponentInChildren<TMPro.TextMeshProUGUI>();
+    }
+
+    public void OnPointerClick(PointerEventData eventData)
+    {
+        if (eventData.button == PointerEventData.InputButton.Left)
+        {
+            if (isClick)
+            {
+                image.sprite = norSprite;
+                text.color = normalColor;
+            }
+            else
+            {
+                image.color = normalColor;
+                image.sprite = selSprite;
+                text.color = selectColor;
+            }
+            isClick = !isClick;
+            if (onClick != null)
+                onClick();
+        }
+    }
+
+    public void OnPointerEnter(PointerEventData eventData)
+    {
+        if (!isClick)
+        {
+            image.color = enterColor;
+            text.color = enterColor;
+        }
+    }
+
+    public void OnPointerExit(PointerEventData eventData)
+    {
+        if (!isClick)
+        {
+            image.color = normalColor;
+            text.color = normalColor;
+        }
+    }
+
+    public void ExitClick()
+    {
+        image.sprite = norSprite;
+        text.color = normalColor;
+        isClick = false;
+    }
+}
