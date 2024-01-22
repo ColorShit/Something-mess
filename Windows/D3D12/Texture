@@ -66,7 +66,7 @@ D3D12_INPUT_ELEMENT_DESC inputElementDescs[] =
 {
     { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,
     D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-    { "TEXTURE", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12,
+    { "TEXCOORD", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12,
     D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
 };
 
@@ -124,6 +124,13 @@ ComPtr<ID3D12Resource> textureUploadHeap;
     srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
     srvDesc.Texture2D.MipLevels = 1;
     m_device->CreateShaderResourceView(m_texture.Get(), &srvDesc, m_srvHeap->GetCPUDescriptorHandleForHeapStart());
+
+Vertex triangleVertices[] =
+{
+    { { 0.0f, 0.25f * m_aspectRatio, 0.0f }, { 0.5f, 0.0f } },
+    { { 0.25f, -0.25f * m_aspectRatio, 0.0f }, { 1.0f, 1.0f } },
+    { { -0.25f, -0.25f * m_aspectRatio, 0.0f }, { 0.0f, 1.0f } }
+};
 }
 
 // Close the command list and execute it to begin the initial GPU setup.
@@ -131,3 +138,18 @@ ThrowIfFailed(m_commandList->Close());
 ID3D12CommandList* ppCommandLists[] = { m_commandList.Get() };
 m_commandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
 }
+
+//PopulateCommandList
+{
+   ID3D12DescriptorHeap* ppHeaps[] = { m_srvHeap.Get() };
+   m_commandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
+
+   m_commandList->SetGraphicsRootDescriptorTable(
+    0, m_srvHeap->GetGPUDescriptorHandleForHeapStart());
+}
+
+struct Vertex
+{
+    XMFLOAT3 position;
+    XMFLOAT2 uv;
+};
