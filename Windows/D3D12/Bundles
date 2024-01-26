@@ -1,0 +1,24 @@
+//Load Pipeline
+ThrowIfFailed(m_device->CreateCommandAllocator(
+    D3D12_COMMAND_LIST_TYPE_BUNDLE, IID_PPV_ARGS(&m_bundleAllocator)));
+//Load Assets
+// Create and record the bundle
+{
+    ThrowIfFailed(m_device->CreateCommandList(
+        0,
+        D3D12_COMMAND_LIST_TYPE_BUNDLE,
+        m_bundleAllocator.Get(),
+        m_pipelineState.Get(),
+        IID_PPV_ARGS(&m_bundle)));
+    m_bundle->SetGraphicsRootSignature(m_rootSignature.Get());
+    m_bundle->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    m_bundle->IASetVertexBuffers(0, 1, &m_vertexBufferView);
+    m_bundle->DrawInstanced(3, 1, 0, 0);
+    ThrowIfFailed(m_bundle->Close());
+}
+//PopulateCommandList
+const float clearColor[] = { 0.0f, 0.2f, 0.4f, 1.0f };
+m_commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
+
+// Execute the commands stored in the bundle.
+m_commandList->ExecuteBundle(m_bundle.Get());
