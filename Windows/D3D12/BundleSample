@@ -1,0 +1,40 @@
+// Load Pipeline
+// Create descriptor heaps.
+{
+    // Describe and create a render target view (RTV) descriptor heap.
+    D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
+    rtvHeapDesc.NumDescriptors = FrameCount;
+    rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
+    rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+    ThrowIfFailed(m_device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&m_rtvHeap)));
+
+    // Describe and create a depth stencil view (DSV) descriptor heap.
+    D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc = {};
+    dsvHeapDesc.NumDescriptors = 1;
+    dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
+    dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+    ThrowIfFailed(m_device->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(&m_dsvHeap)));
+
+    // Describe and create a shader resource view (SRV) and constant 
+    // buffer view (CBV) descriptor heap.
+    D3D12_DESCRIPTOR_HEAP_DESC cbvSrvHeapDesc = {};
+    cbvSrvHeapDesc.NumDescriptors =
+        FrameCount * CityRowCount * CityColumnCount        // FrameCount frames * CityRowCount * CityColumnCount.
+        + 1;                                            // + 1 for the SRV.
+    cbvSrvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+    cbvSrvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+    ThrowIfFailed(m_device->CreateDescriptorHeap(&cbvSrvHeapDesc, IID_PPV_ARGS(&m_cbvSrvHeap)));
+    NAME_D3D12_OBJECT(m_cbvSrvHeap);
+
+    // Describe and create a sampler descriptor heap.
+    D3D12_DESCRIPTOR_HEAP_DESC samplerHeapDesc = {};
+    samplerHeapDesc.NumDescriptors = 1;
+    samplerHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER;
+    samplerHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+    ThrowIfFailed(m_device->CreateDescriptorHeap(&samplerHeapDesc, IID_PPV_ARGS(&m_samplerHeap)));
+
+    m_rtvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(
+        D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+    m_cbvSrvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(
+        D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+}
