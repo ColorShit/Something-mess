@@ -1,0 +1,258 @@
+#ifndef FSAVLTREE
+#define FSAVLTREE
+#include "FSTreeBasic.h"
+
+void PrintEntity(struct AVLTreeNode* root)
+{
+	if (root == nullptr)
+		return;
+	std::cout << root->key << " ";
+	PrintEntity(root->leftNode);
+	PrintEntity(root->rightNode);
+}
+
+int height(AVLTreeNode* root)
+{
+	if (root == nullptr)
+		return 0;
+	return root->height;
+}
+
+int max(int a, int b)
+{
+	return (a > b) ? a : b;
+}
+
+struct AVLTreeNode* FindPointNode(struct AVLTreeNode* root, int value)
+{
+	if (root == nullptr)
+		return nullptr;
+	if (root->key == value)
+		return root;
+	AVLTreeNode* temp = nullptr;
+	if (root->key < value)
+		temp = FindPointNode(root->rightNode, value);
+	else
+		temp = FindPointNode(root->leftNode, value);
+	return temp;
+}
+
+struct AVLTreeNode* FindMaxNode(struct AVLTreeNode* root)
+{
+	if (root == nullptr)
+		return root;
+	struct AVLTreeNode* temp = root;
+	while (temp->rightNode != nullptr)
+	{
+		temp = temp->rightNode;
+	}
+	return temp;
+}
+
+void PrintLeftViewEntity(struct AVLTreeNode* root, int length, int* max)
+{
+	if (root == nullptr)
+		return;
+
+	if (length > *max)
+	{
+		std::cout << root->key << " ";
+		*max = *max + 1;
+	}
+	PrintLeftViewEntity(root->leftNode, length + 1, max);
+	PrintLeftViewEntity(root->rightNode, length + 1, max);
+}
+
+void PrintRightViewEntity(struct AVLTreeNode* root, int length, int& max)
+{
+	if (root == nullptr)
+		return;
+
+	if (length > max)
+	{
+		std::cout << root->key << " ";
+		max = max + 1;
+	}
+	PrintRightViewEntity(root->rightNode, length + 1, max);
+	PrintRightViewEntity(root->leftNode, length + 1, max);
+}
+
+void PrintOneSideViewEnter(struct AVLTreeNode* root, bool vector)
+{
+	int current = 1;
+	int max = 0;
+	if (vector)
+		PrintLeftViewEntity(root, current, &max);
+	else
+		PrintRightViewEntity(root, current, max);
+}
+
+void PrintHeightEntity(struct AVLTreeNode* root)
+{
+	if (root == nullptr)
+		return;
+	std::cout << root->height << " ";
+	PrintHeightEntity(root->leftNode);
+	PrintHeightEntity(root->rightNode);
+}
+
+void PrintOrderEntity(struct AVLTreeNode* root, int level)
+{
+	if (root == nullptr)
+		return;
+	else if (0 == level)
+		std::cout << root->key << " ";
+	else
+	{
+		PrintOrderEntity(root->leftNode, level - 1);
+		PrintOrderEntity(root->rightNode, level - 1);
+	}
+}
+
+void PrintOrderEnter(struct AVLTreeNode* root)
+{
+	for (int i = 0; i < root->height; i++)
+	{
+
+		PrintOrderEntity(root, i);
+		std::cout << std::endl;
+	}
+}
+
+struct AVLTreeNode* leftRotate(AVLTreeNode* z)
+{
+	AVLTreeNode* y = z->rightNode;
+	AVLTreeNode* T2 = y->leftNode;
+
+	y->leftNode = z;
+	z->rightNode = T2;
+
+	y->height = max(height(y->leftNode), height(y->rightNode)) + 1;
+	z->height = max(height(z->leftNode), height(z->rightNode)) + 1;
+
+	return y;
+}
+
+struct AVLTreeNode* rightRotate(AVLTreeNode* z)
+{
+	AVLTreeNode* y = z->leftNode;
+	AVLTreeNode* T3 = y->rightNode;
+
+	y->rightNode = z;
+	z->leftNode = T3;
+
+	z->height = max(height(z->leftNode), height(z->rightNode)) + 1;
+	y->height = max(height(y->leftNode), height(y->rightNode)) + 1;
+
+	return y;
+}
+
+int getBalance(AVLTreeNode* root)
+{
+	if (root == nullptr)
+		return 0;
+	return height(root->leftNode) - height(root->rightNode);
+}
+
+struct AVLTreeNode* InsertEntity(struct AVLTreeNode* root, int value)
+{
+	if (root == nullptr)
+		return (new AVLTreeNode(value));
+
+	if (value < root->key)
+		root->leftNode = InsertEntity(root->leftNode, value);
+	else if (value > root->key)
+		root->rightNode = InsertEntity(root->rightNode, value);
+	else
+		return root;
+
+	root->height = max(height(root->leftNode), height(root->rightNode)) + 1;
+
+	int balance = getBalance(root);
+
+	if (balance > 1 && value < root->leftNode->key)
+		return rightRotate(root);
+
+	if (balance < -1 && value > root->rightNode->key)
+		return leftRotate(root);
+
+	if (balance > 1 && value > root->leftNode->key)
+	{
+		AVLTreeNode* temp = leftRotate(root->leftNode);
+		return rightRotate(root);
+	}
+
+	if (balance < -1 && value < root->rightNode->key)
+	{
+		AVLTreeNode* temp = rightRotate(root->rightNode);
+		return leftRotate(root);
+	}
+
+	return root;
+}
+
+struct AVLTreeNode* DeleteEntity(struct AVLTreeNode* root, int value)
+{
+	if (root == nullptr)
+		return nullptr;
+	if (value > root->key)
+		root->rightNode = DeleteEntity(root->rightNode, value);
+	else if (value < root->key)
+		root->leftNode = DeleteEntity(root->leftNode, value);
+	else
+	{
+		if (root->leftNode == nullptr)
+		{
+			struct AVLTreeNode* temp = root->rightNode;
+			free(root);
+			return temp;
+		}
+		else if (root->rightNode == nullptr)
+		{
+			struct AVLTreeNode* temp = root->leftNode;
+			free(root);
+			return temp;
+		}
+		else
+		{
+			struct AVLTreeNode* temp = FindMaxNode(root->leftNode);
+			root->key = temp->key;
+			root->leftNode = DeleteEntity(root->leftNode, temp->key);
+		}
+	}
+
+	if (root == nullptr)
+		return nullptr;
+	root->height = max(height(root->leftNode), height(root->rightNode)) + 1;
+	int balance = getBalance(root);
+	if (balance > 1)
+	{
+		if (getBalance(root->leftNode) < 0)
+			root->leftNode = leftRotate(root->leftNode);
+		return rightRotate(root);
+	}
+	if (balance < -1)
+	{
+		if (getBalance(root->rightNode) > 0)
+			root->rightNode = rightRotate(root->rightNode);
+		return leftRotate(root);
+	}
+	return root;
+}
+
+class AVLTree
+{
+private:
+	AVLTreeNode* root;
+public:
+	AVLTree() : root(nullptr) {}
+	void Insert(int value) { root = InsertEntity(root, value); }
+	void Delete(int value) { root = DeleteEntity(root, value); }
+	void PrintHeight() { PrintHeightEntity(root); std::cout << std::endl; }
+	void Print() { PrintEntity(root); std::cout << std::endl; }
+	void PrintOrder() { PrintOrderEnter(root); std::cout << std::endl; }
+	void PrintLeftView() { PrintOneSideViewEnter(root, true); std::cout << std::endl; }
+	void PrintRightView() { PrintOneSideViewEnter(root, false); std::cout << std::endl; }
+};
+
+#endif // !FSAVLTREE
