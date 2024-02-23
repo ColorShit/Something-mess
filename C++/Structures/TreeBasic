@@ -1,0 +1,36 @@
+#ifndef FSTreeBasic
+#define FSTreeBasic
+
+#include <iostream>
+#include <vector>
+
+struct BinaryTreeNode
+{
+	int data;
+	BinaryTreeNode* leftNode, * rightNode;
+public:
+	BinaryTreeNode(int value)
+	{
+		data = value;
+		leftNode = nullptr;
+		rightNode = nullptr;
+	}
+};
+
+struct AVLTreeNode
+{
+public:
+	int key;
+	AVLTreeNode* leftNode;
+	AVLTreeNode* rightNode;
+	int height;
+	AVLTreeNode(int value)
+	{
+		key = value;
+		leftNode = nullptr;
+		rightNode = nullptr;
+		height = 1;
+	}
+};
+
+#endif // !FSTreeBasic
