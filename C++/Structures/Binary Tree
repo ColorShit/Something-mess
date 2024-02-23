@@ -1,0 +1,308 @@
+#ifndef FSBINARYTREE_H
+#define FSBINARYTREE_H
+
+//#include "FSTreeBasic.h"
+#pragma region Binary Tree
+int insertTimes = 0;
+struct BinaryTreeNode* InsertEntity(struct BinaryTreeNode* node, int value)
+{
+	if (node == nullptr)
+	{
+		struct BinaryTreeNode* temp = new BinaryTreeNode(value);
+		return temp;
+	}
+	if (value < node->data)
+		node->leftNode = InsertEntity(node->leftNode, value);
+	else if (value > node->data)
+		node->rightNode = InsertEntity(node->rightNode, value);
+	insertTimes++;
+	return node;
+}
+
+void InorderEntity(struct BinaryTreeNode* node)
+{
+	if (node == nullptr)
+		return;
+	InorderEntity(node->leftNode);
+	std::cout << node->data << " ";
+	InorderEntity(node->rightNode);
+}
+
+int searchHeightTimes = 0;
+
+#pragma region General Function
+
+int height(struct BinaryTreeNode* node)
+{
+	searchHeightTimes++;
+	if (node == nullptr)
+		return 0;
+	int leftDepth = height(node->leftNode);
+	int rightDepth = height(node->rightNode);
+	if (leftDepth > rightDepth)
+		return leftDepth + 1;
+	else
+		return rightDepth + 1;
+}
+
+struct BinaryTreeNode* rightMinValueNode(struct BinaryTreeNode* node)
+{
+	struct BinaryTreeNode* current = node;
+	while (current && current->leftNode != nullptr)
+		current = current->leftNode;
+	return current;
+}
+
+struct BinaryTreeNode* leftMaxValueNode(struct BinaryTreeNode* node)
+{
+	struct BinaryTreeNode* current = node;
+	while (current && current->rightNode != nullptr)
+		current = current->rightNode;
+	return current;
+}
+
+struct BinaryTreeNode* minValueNode(struct BinaryTreeNode* node)
+{
+	struct BinaryTreeNode* current = node;
+	while (current && current->leftNode != nullptr)
+		current = current->leftNode;
+	return current;
+}
+
+struct BinaryTreeNode* maxValueNode(struct BinaryTreeNode* node)
+{
+	struct BinaryTreeNode* current = node;
+	while (current && current->rightNode != nullptr)
+		current = current->rightNode;
+	return current;
+}
+
+int totalCount(struct BinaryTreeNode* node)
+{
+	if (node == nullptr)
+		return 0;
+	else
+	    return totalCount(node->leftNode) + totalCount(node->rightNode) + 1;
+}
+
+#pragma endregion
+
+#pragma region Print Level Order
+void PrintGivenLevel(struct BinaryTreeNode* node, int level)
+{
+	if (node == nullptr)
+		return;
+	else if (level == 1)
+		std::cout << node->data << " ";
+	else 
+	{
+		PrintGivenLevel(node->leftNode, level - 1);
+		PrintGivenLevel(node->rightNode, level - 1);
+	}
+}
+
+void PrintLevelOrderNode(struct BinaryTreeNode* node)
+{
+	int h = height(node);
+	std::cout << "Search Height Times: " << searchHeightTimes << std::endl;
+	for (int i = 1; i < h + 1; i++)
+	{
+		PrintGivenLevel(node, i);
+	}
+}
+#pragma endregion
+
+#pragma region Print Leave Node
+void PrintLeaveNode(struct BinaryTreeNode* node)
+{
+	if (node == nullptr)
+		return;
+	if (node->leftNode == nullptr && node->rightNode == nullptr)
+		std::cout << node->data << " ";
+	else {
+		if (node->leftNode != nullptr)
+			PrintLeaveNode(node->leftNode);
+		if (node->rightNode)
+			PrintLeaveNode(node->rightNode);
+	}
+}
+
+void PrintNonLeaveNode(struct BinaryTreeNode* node)
+{
+	if (node == nullptr)
+		return;
+	if (node->leftNode == nullptr && node->rightNode == nullptr)
+		return;
+	std::cout << node->data << " ";
+	PrintNonLeaveNode(node->leftNode);
+	PrintNonLeaveNode(node->rightNode);
+}
+#pragma endregion
+
+#pragma region Print Left or Right View Node
+
+void RightViewUtil(struct BinaryTreeNode* node, int level, int* max_level)
+{
+	if (node == nullptr)
+		return;
+	if (*max_level < level)
+	{
+		std::cout << "\t" << node->data;
+		*max_level = level;
+	}
+
+	RightViewUtil(node->rightNode, level + 1, max_level);
+	RightViewUtil(node->leftNode, level + 1, max_level);
+}
+
+void LeftViewUtil(struct BinaryTreeNode* node, int level, int* max_level)
+{
+	if (node == nullptr)
+		return;
+	if (*max_level < level)
+	{
+		std::cout << "\t" << node->data;
+		*max_level = level;
+	}
+
+	LeftViewUtil(node->leftNode, level + 1, max_level);
+	LeftViewUtil(node->rightNode, level + 1, max_level);
+	
+}
+
+void ViewNode(struct BinaryTreeNode* node, bool vector)
+{
+	int max_level = 0;
+	if (vector)
+		RightViewUtil(node, 1, &max_level);
+	else
+		LeftViewUtil(node, 1, &max_level);
+}
+
+#pragma endregion
+
+#pragma region Delete
+
+struct BinaryTreeNode* DeleteNode(struct BinaryTreeNode* node, int key)
+{
+	if (node == nullptr)
+		return node;
+	if (node->data < key)
+		node->rightNode = DeleteNode(node->rightNode, key);
+	else if (node->data > key)
+		node->leftNode = DeleteNode(node->leftNode, key);
+	else
+	{
+		if (node->leftNode == nullptr)
+		{
+			struct BinaryTreeNode* temp = node->rightNode;
+			delete node;
+			return temp;
+		}
+		else if (node->rightNode == nullptr)
+		{
+			struct BinaryTreeNode* temp = node->leftNode;
+			delete node;
+			return temp;
+		}
+		struct BinaryTreeNode* temp = leftMaxValueNode(node->leftNode);
+		node->data = temp->data;
+		node->leftNode = DeleteNode(node->leftNode, temp->data);
+	}
+	return node;
+}
+
+int emptyTime = 0;
+struct BinaryTreeNode* EmptyTotalTreeEntity(struct BinaryTreeNode* node)
+{
+	emptyTime++;
+	if (node != nullptr) 
+	{
+		EmptyTotalTreeEntity(node->leftNode);
+		EmptyTotalTreeEntity(node->rightNode);
+		std::cout << "\nReleased node:" << node->data;
+		delete node;
+	}
+	node = nullptr;
+	return node;
+}
+
+#pragma endregion
+
+#pragma region Search Node
+
+
+
+#pragma endregion
+
+class BinaryTree
+{
+private:
+	BinaryTreeNode* head;
+	
+public:
+	BinaryTree() : head(nullptr) {}
+	void Insert(int value)
+	{
+		if (head == nullptr)
+			head = InsertEntity(head, value);
+		else
+			InsertEntity(head, value);
+		std::cout << insertTimes << std::endl;
+	}
+	void PrintLevelOrder()
+	{
+		PrintLevelOrderNode(head);
+		std::cout << std::endl;
+	}
+	void PrintLeaves()
+	{
+		PrintLeaveNode(head);
+		std::cout << std::endl;
+	}
+	void PrintNonLeaves()
+	{
+		PrintNonLeaveNode(head);
+		std::cout << std::endl;
+	}
+	void Inorder()
+	{
+		InorderEntity(head);
+		std::cout << std::endl;
+	}
+	void RightView()
+	{
+		ViewNode(head, true);
+		std::cout << std::endl;
+	}
+	void LeftView()
+	{
+		ViewNode(head, false);
+		std::cout << std::endl;
+	}
+	void Delete(int key)
+	{
+		head = DeleteNode(head, key);
+	}
+	void Clear()
+	{
+		head = EmptyTotalTreeEntity(head);
+		std::cout << "\nClear Count: " << emptyTime << std::endl;
+	}
+	int SearchValue(bool vector)
+	{
+		struct BinaryTreeNode* current;
+		if (vector)
+			current = maxValueNode(head);
+		else
+			current = minValueNode(head);
+		return current->data;
+	}
+	int Count()
+	{
+		return totalCount(head);
+	}
+};
+
+#pragma endregion
+#endif
