@@ -1,0 +1,30 @@
+static int quickSoutTime = 0;
+int Quick(int* array, int start, int end)
+{
+	int* pivot = &array[end];
+	int temp = start, i = start;
+	while (i < end + 1)
+	{
+		quickSoutTime++;
+		if (array[i] < *pivot)
+		{
+			Swap<int>(array[i], array[temp]);
+			temp++;
+		}
+		i++;
+	}
+	Swap<int>(array[temp], *pivot);
+	return temp;
+}
+
+void QuickSout(int* array, int start, int end)
+{
+	if (start >= end)
+		return;
+	int pivot = Quick(array, start, end);
+
+	QuickSout(array, start, pivot - 1);
+	QuickSout(array, pivot + 1, end);
+
+}
+#pragma endregion
