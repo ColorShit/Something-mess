@@ -1,0 +1,63 @@
+#pragma region Merge Sort
+static int mergeSoutTime;
+void Merge(int* array, int start, int mid, int end)
+{
+	int i;
+	const int leftLength = mid - start + 1;
+	const int rightLength = end - mid;
+	int* leftArray = new int[leftLength], * rightArray = new int[rightLength];
+	for (i = 0; i < leftLength; i++)
+	{
+		leftArray[i] = array[start + i];
+	}
+	for (i = 0; i < rightLength; i++)
+	{
+		rightArray[i] = array[mid + i + 1];
+	}
+
+	int currentLeft = 0, currentRight = 0;
+	i = start;
+	while (currentLeft < leftLength && currentRight < rightLength)
+	{
+		mergeSoutTime++;
+		if (leftArray[currentLeft] <= rightArray[currentRight])
+		{
+			array[i] = leftArray[currentLeft];
+			currentLeft++;
+		}
+		else
+		{
+			array[i] = rightArray[currentRight];
+			currentRight++;
+		}
+		i++;
+	}
+
+	while (currentLeft < leftLength)
+	{
+		mergeSoutTime++;
+		array[i] = leftArray[currentLeft];
+		i++; currentLeft++;
+	}
+
+	while (currentRight < rightLength)
+	{
+		mergeSoutTime++;
+		array[i] = rightArray[currentRight];
+		i++; currentRight++;
+	}
+
+	delete[] leftArray;
+	delete[] rightArray;
+}
+
+void MergeSort(int* array, int start, int end)
+{
+	if (start >= end)
+		return;
+	int mid = start + (end - start) / 2;
+	MergeSort(array, start, mid);
+	MergeSort(array, mid + 1, end);
+	Merge(array, start, mid, end);
+}
+#pragma endregion
