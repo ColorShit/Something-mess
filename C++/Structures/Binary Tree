@@ -1,7 +1,7 @@
 #ifndef FSBINARYTREE_H
 #define FSBINARYTREE_H
 
-//#include "FSTreeBasic.h"
+#include "FSTreeBasic.h"
 #pragma region Binary Tree
 int insertTimes = 0;
 struct BinaryTreeNode* InsertEntity(struct BinaryTreeNode* node, int value)
