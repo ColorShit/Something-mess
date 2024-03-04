@@ -1,0 +1,17 @@
+using UnityEngine;
+using UnityEngine.UI;
+using System;
+
+namespace FlashStorm
+{
+    public class FSPanel : MonoBehaviour
+    {
+        public GameObject BgImage;
+        public Button ReturnBtn;
+    }
+
+    public class FSModel
+    {
+
+    }
+}
