@@ -1,0 +1,96 @@
+using System;
+
+namespace FlashStorm
+{
+    public class FStack
+    {
+        private FSView[] stack;
+        private int length = 0;
+        public FStack() { }
+        public FStack(FSView data)
+        {
+            stack = new FSView[] { data };
+        }
+
+        public void Push(FSView data)
+        {
+            if (stack == null)
+            {
+                stack = new FSView[] { data };
+                length++;
+            }
+            else
+            {
+                if (length == 0)
+                {
+                    stack = new FSView[] { data };
+                    length++;
+                }
+                else
+                {
+                    stack[length - 1].Hidden();
+                    FSView[] temStack = new FSView[length + 1];
+                    Array.Copy(stack, temStack, length);
+                    temStack[length] = data;
+                    stack = temStack;
+                    length++;
+                }
+            }
+            data.Enable();
+        }
+
+        public void Replace(FSView data)
+        {
+            data.Enable();
+            if (length == 0)
+            {
+                FSView[] stack = { data };
+                length++;
+                return;
+            }
+            stack[length - 1].Close();
+            stack[length - 1] = data;
+        }
+
+        public void Pop()
+        {
+            if (length != 0)
+            {
+                length--;
+                stack[length].Close();
+                FSView[] temStack = new FSView[length];
+                Array.Copy(stack, temStack, length);
+                stack = temStack;
+                if (length == 0)
+                    return;
+                stack[length - 1].Show();
+            }
+        }
+
+        public FSView Top()
+        {
+            if (length != 0)
+                return stack[length - 1];
+            return null;
+        }
+
+        public FSView Last()
+        {
+            if (length != 0)
+                return stack[0];
+            return null;
+        }
+
+        public bool Empty()
+        {
+            return (length == 0) ? true : false;
+        }
+
+        public int Size()
+        {
+            return length;
+        }
+
+
+    }
+}
