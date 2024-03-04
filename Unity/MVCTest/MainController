@@ -1,0 +1,73 @@
+using UnityEngine;
+using System.Collections.Generic;
+using System.Reflection;
+using System;
+
+namespace FlashStorm
+{
+    public class MainController : MonoBehaviour
+    {
+        #region Single Mode
+        public static MainController instance;
+        private void Awake()
+        {
+            instance = this;
+            stack = new FStack();
+            dicView = new Dictionary<Type, FSView>();
+            father_tree_node = ftn;
+        }
+        #endregion
+        public static Transform[] father_tree_node;
+        public Transform[] ftn;
+        public string firstName;
+
+        private Dictionary<Type, FSView> dicView;
+
+        #region Stack Operations
+        private FStack stack;
+        public void PushStack<T>()
+        {
+            FSView tempView = InstantiateView(typeof(T).Name);
+            stack.Push(tempView);
+        }
+        public void ReplaceStack<T>()
+        {
+            FSView tempView = InstantiateView(typeof(T).Name);
+            stack.Replace(tempView);
+        }
+        private FSView InstantiateView(string typename)
+        {
+            FSView tempView;
+            Type tempType = Type.GetType(typename);
+            dicView.TryGetValue(tempType, out tempView);
+            if (tempView == null)
+            {
+                tempView = Activator.CreateInstance(tempType) as FSView;
+                dicView.Add(tempType, tempView);
+            }
+            return tempView;
+        }
+        public void PopStack()
+        {
+            stack.Pop();
+        }
+        public void PopStack(int m)
+        {
+            int n = stack.Size() - m, i = 0;
+            while (i < n)
+            {
+                stack.Pop();
+                i++;
+            }
+        }
+        #endregion
+
+        private void Start()
+        {
+        }
+
+        private void Update()
+        {
+        }
+    }
+}
