@@ -14,27 +14,19 @@ namespace FlashStorm
 
         public void Push(FSView data)
         {
-            if (stack == null)
+            if (stack == null || length == 0)
             {
                 stack = new FSView[] { data };
                 length++;
             }
             else
             {
-                if (length == 0)
-                {
-                    stack = new FSView[] { data };
-                    length++;
-                }
-                else
-                {
-                    stack[length - 1].Hidden();
-                    FSView[] temStack = new FSView[length + 1];
-                    Array.Copy(stack, temStack, length);
-                    temStack[length] = data;
-                    stack = temStack;
-                    length++;
-                }
+                stack[length - 1].Hidden();
+                FSView[] temStack = new FSView[length + 1];
+                Array.Copy(stack, temStack, length);
+                temStack[length] = data;
+                stack = temStack;
+                length++;
             }
             data.Enable();
         }
