@@ -4,14 +4,11 @@ using System;
 
 namespace FlashStorm
 {
-    public class FSPanel : MonoBehaviour
+    public abstract class FSPanel : MonoBehaviour
     {
         public GameObject BgImage;
         public Button ReturnBtn;
     }
 
-    public class FSModel
-    {
-
-    }
+    public abstract class FSModel {}
 }
