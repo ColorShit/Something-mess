@@ -70,14 +70,12 @@ public class CameraController : MonoBehaviour
             computeOperator += MoveRot;
         }
 
-        // Start is called before the first frame update
         void Start()
         {
             if (cameraMain == null)
                 cameraMain = gameObject.GetComponent<Camera>();
         }
 
-        // Update is called once per frame
         void Update()
         {
             if (computeOperator != null)
