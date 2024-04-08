@@ -22,10 +22,17 @@ namespace FlashStorm
             else
             {
                 stack[length - 1].Hidden();
-                FSView[] temStack = new FSView[length + 1];
-                Array.Copy(stack, temStack, length);
-                temStack[length] = data;
-                stack = temStack;
+                try
+                {
+                    stack[length] = data;
+                }
+                catch (Exception)
+                {
+                    FSView[] tempStack = new FSView[length * 2];
+                    Array.Copy(stack, tempStack, length);
+                    tempStack[length] = data;
+                    stack = tempStack;
+                }
                 length++;
             }
             data.Enable();
@@ -36,7 +43,7 @@ namespace FlashStorm
             data.Enable();
             if (length == 0)
             {
-                FSView[] stack = { data };
+                stack = new FSView[] { data };
                 length++;
                 return;
             }
@@ -50,9 +57,7 @@ namespace FlashStorm
             {
                 length--;
                 stack[length].Close();
-                FSView[] temStack = new FSView[length];
-                Array.Copy(stack, temStack, length);
-                stack = temStack;
+                stack[length] = null;
                 if (length == 0)
                     return;
                 stack[length - 1].Show();
@@ -82,7 +87,6 @@ namespace FlashStorm
         {
             return length;
         }
-
-
     }
 }
+
