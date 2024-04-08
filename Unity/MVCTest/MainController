@@ -6,7 +6,6 @@ using System.Linq;
 
 namespace FlashStorm
 {
-    [ExecuteAlways]
     public class MainController : MonoBehaviour
     {
         #region Single Mode
