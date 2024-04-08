@@ -1,23 +1,21 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using System;
 using System.Reflection;
 
 namespace FlashStorm
 {
-    //public abstract class FSView<T, F> : FSView where T : FSPanel where F : FSModel
-    public abstract class FSView<T> : FSView where T : FSPanel
+    public abstract class FSView<T, F> : FSView where T : FSPanel where F : FSModel
     {
         protected T Panel;
-        //protected F Model
+        protected F Model;
         private string panelPath;
         private byte level;
         public FSView()
         {
             var route = GetType().GetCustomAttribute<MVPAttribute>();
-            panelPath = route.path;
+            panelPath = "PanelPrefabs/" + route.path;
             level = route.treeLevel;
+            Model = MainController.instance.ConnectModel(typeof(F).Name) as F;
         }
 
         public override void Enable()
@@ -59,7 +57,6 @@ namespace FlashStorm
         public abstract void Close();
         public abstract void Show();
         public abstract void Hidden();
-
     }
 
     [AttributeUsage(AttributeTargets.Class)]
