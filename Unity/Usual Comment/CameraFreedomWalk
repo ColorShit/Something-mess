@@ -1,0 +1,168 @@
+// This code is only applicable the scene that walks around a single gameobject in a scene.  
+//     ***************
+//     *  gameobj    *
+//     ***************
+// below is sample, only a single gameobject in the center of scene
+using UnityEngine;
+
+public class FreedomWatch : MonoBehaviour
+{
+    Camera maincamera;
+
+    #region Rotate
+    private bool isFreedom;
+    [Range(2, 10)]
+    public int rotYSpeed;
+    [Range(2, 10)]
+    public int rotXSpeed;
+    [Range(45, 89)]
+    public int xRotUpLimit;
+    [Range(45, 89)]
+    public int xRotDownLimit;
+    private Vector3 targetVec3;
+    private Vector3 originalVec3;
+    #endregion
+
+    #region Move
+    public FlashStorm.FSAction moveAction;
+    [Range(1, 5)]
+    public float moveSpeed;
+
+    private Vector3 forwardVec3;
+    private Vector3 leftVec3;
+    private float acceleration;
+    #endregion
+
+    [Range(10, 59)]
+    public int minScrollerValue;
+    [Range(61, 120)]
+    public int maxScrollerValue;
+    [Range(0.1f, 2.0f)]
+    public float scrollerSpeed;
+
+    private void Awake()
+    {
+        maincamera = GetComponent<Camera>();
+        originalVec3 = transform.localEulerAngles;
+        targetVec3 = transform.localEulerAngles;
+        isFreedom = false;
+        acceleration = 1;
+        scrollerSpeed = 1;
+        minScrollerValue = 10;
+        maxScrollerValue = 120;
+        rotYSpeed = 2;
+        rotXSpeed = 2;
+        xRotUpLimit = 63;
+        xRotDownLimit = 63;
+        moveSpeed = 2.3f;
+    }
+
+    private void OnEnable()
+    {
+        targetVec3 = originalVec3;
+        isFreedom = false;
+    }
+
+    void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.F))
+        {
+            Cursor.visible = isFreedom;
+            Cursor.lockState = isFreedom ? CursorLockMode.Confined : CursorLockMode.Locked;
+            isFreedom = !isFreedom;
+        }
+        if (isFreedom)
+        {
+            float xRot = Input.GetAxis("Mouse X") * rotYSpeed * Time.deltaTime * 100;
+            float yRot = Input.GetAxis("Mouse Y") * rotXSpeed * Time.deltaTime * 100;
+
+            if (xRot != 0 || yRot != 0)
+            {
+                targetVec3 += new Vector3(-yRot, xRot, 0);
+                CheckXRot(ref targetVec3);
+                transform.localEulerAngles = targetVec3;
+            }
+
+            if (Input.GetKey(KeyCode.LeftShift))
+                acceleration = 3;
+            else if (Input.GetKeyUp(KeyCode.LeftShift))
+                acceleration = 1;
+            if (Input.GetKey(KeyCode.W))
+            {
+                float thelt = transform.localEulerAngles.y * Mathf.PI / 180;
+                forwardVec3 = GetDirectionVec3(thelt);
+                Vector3 tempVec3 = transform.position + forwardVec3 * Time.deltaTime * moveSpeed * acceleration;
+                transform.position = CheckPosition(tempVec3);
+
+            }
+            else if (Input.GetKey(KeyCode.S))
+            {
+                float thelt = transform.localEulerAngles.y * Mathf.PI / 180;
+                forwardVec3 = GetDirectionVec3(thelt);
+                Vector3 tempVec3 = transform.position - forwardVec3 * Time.deltaTime * moveSpeed * acceleration;
+                transform.position = CheckPosition(tempVec3);
+            }
+            if (Input.GetKey(KeyCode.A))
+            {
+                float thelt = transform.localEulerAngles.y * Mathf.PI / 180 - Mathf.PI / 2;
+                leftVec3 = GetDirectionVec3(thelt);
+                Vector3 tempVec3 = transform.position + leftVec3 * Time.deltaTime * moveSpeed * acceleration;
+                transform.position = CheckPosition(tempVec3);
+            }
+            else if (Input.GetKey(KeyCode.D))
+            {
+                float thelt = transform.localEulerAngles.y * Mathf.PI / 180 - Mathf.PI / 2;
+                leftVec3 = GetDirectionVec3(thelt);
+                Vector3 tempVec3 = transform.position - leftVec3 * Time.deltaTime * moveSpeed * acceleration;
+                transform.position = CheckPosition(tempVec3);
+            }
+        }
+        float scrollRot = -Input.GetAxis("Mouse ScrollWheel");
+        maincamera.fieldOfView = CheckFOValue(maincamera.fieldOfView + (scrollRot * scrollerSpeed * 10));
+    }
+
+    private void CheckXRot(ref Vector3 vec3)
+    {
+        if (vec3.x < 0)
+            vec3 = new Vector3(Mathf.Max(vec3.x, -xRotUpLimit), vec3.y, 0);
+        else
+            vec3 = new Vector3(Mathf.Min(vec3.x, xRotDownLimit), vec3.y, 0);
+    }
+
+    private Vector3 GetDirectionVec3(float thelt)
+    {
+        return Vector3.Normalize(new Vector3(Mathf.Sin(thelt), 0, Mathf.Cos(thelt)));
+    }
+
+    private Vector3 CheckPosition(Vector3 vec)
+    {
+        Vector3 vec3 = new Vector3(
+            Mathf.Clamp(vec.x, 44.549f, 57.049f),
+            vec.y,
+            Mathf.Clamp(vec.z, 45.752f, 51.073f)
+        );
+
+        // Because only be applicable to this, I suggest put number in this directly.
+        //               49.495f                                      ^ z
+        //   48.717f                  52.746f     --------> x         |     
+        //               47.678f                                      |
+        if (vec3.x < 52.746f && vec3.x > 48.717f && vec3.z < 49.495f && vec3.z > 47.678f)
+        {
+            if (!CheckPOS(48.717f, 52.746f, transform.position.x))
+                vec3.x = transform.position.x;
+            if (!CheckPOS(47.678f, 49.495f, transform.position.z))
+                vec3.z = transform.position.z;
+        }
+        return vec3;
+    }
+
+    bool CheckPOS(float left, float right, float target)
+    {
+        return (target > left && target < right);
+    }
+
+    float CheckFOValue(float value)
+    {
+        return Mathf.Min(Mathf.Max(value, minScrollerValue), maxScrollerValue);
+    }
+}
