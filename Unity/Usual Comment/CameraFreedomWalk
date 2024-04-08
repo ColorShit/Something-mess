@@ -1,8 +1,8 @@
-// This code is only applicable the scene that walks around a single gameobject in a scene.  
+// This code is only applicable to the scene that walks around a single gameobject in a scene.  
 //     ***************
 //     *  gameobj    *
 //     ***************
-// below is sample, only a single gameobject in the center of scene
+// Above is illustration, only a single gameobject in the center of scene
 using UnityEngine;
 
 public class FreedomWatch : MonoBehaviour
