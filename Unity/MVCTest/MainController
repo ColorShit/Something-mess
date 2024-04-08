@@ -2,9 +2,11 @@ using UnityEngine;
 using System.Collections.Generic;
 using System.Reflection;
 using System;
+using System.Linq;
 
 namespace FlashStorm
 {
+    [ExecuteAlways]
     public class MainController : MonoBehaviour
     {
         #region Single Mode
@@ -14,7 +16,10 @@ namespace FlashStorm
             instance = this;
             stack = new FStack();
             dicView = new Dictionary<Type, FSView>();
+            dicModel = new Dictionary<string, FSModel>();
+            InstantiateModelAll();
             father_tree_node = ftn;
+            specUILayer = ftn[0];
         }
         #endregion
         public static Transform[] father_tree_node;
@@ -22,15 +27,21 @@ namespace FlashStorm
         public string firstName;
 
         private Dictionary<Type, FSView> dicView;
+        private Dictionary<string, FSModel> dicModel;
 
         #region Stack Operations
         private FStack stack;
-        public void PushStack<T>()
+        public void PushStack<T>() where T : FSView
         {
             FSView tempView = InstantiateView(typeof(T).Name);
             stack.Push(tempView);
         }
-        public void ReplaceStack<T>()
+        public void PushStack(string name)
+        {
+            FSView tempView = InstantiateView(name);
+            stack.Push(tempView);
+        }
+        public void ReplaceStack<T>() where T : FSView
         {
             FSView tempView = InstantiateView(typeof(T).Name);
             stack.Replace(tempView);
@@ -47,6 +58,29 @@ namespace FlashStorm
             }
             return tempView;
         }
+        public FSModel ConnectModel(string typename)
+        {
+            FSModel model;
+            dicModel.TryGetValue(typename, out model);
+            return model;
+        }
+        private void InstantiateModelAll()
+        {
+            Type baseType = typeof(FSModel);
+            var types = Assembly.GetExecutingAssembly().GetTypes().
+                Where(t => t.IsClass && !t.IsAbstract).
+                Where(t => baseType.IsAssignableFrom(t));
+            foreach (var item in types)
+            {
+                InstantiateModel(item.Name);
+            }
+        }
+        private void InstantiateModel(string name)
+        {
+            FSModel tempModel = Activator.CreateInstance(Type.GetType(name)) as FSModel;
+            dicModel.Add(name, tempModel);
+        }
+
         public void PopStack()
         {
             stack.Pop();
@@ -64,10 +98,10 @@ namespace FlashStorm
 
         private void Start()
         {
+            PushStack(firstName);
         }
 
-        private void Update()
-        {
-        }
+        public FreedomWatch mainCamera;
+        public Transform specUILayer { get; set; }
     }
 }
