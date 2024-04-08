@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class CameraFreedomWatch : MonoBehaviour
+public class CameraFreedomRotate : MonoBehaviour
 {
     //Put the camera gameObject into cameraNode,
     //and give it a empty gameobject as father transform.
