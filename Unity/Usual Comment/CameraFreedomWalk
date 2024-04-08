@@ -24,7 +24,6 @@ public class FreedomWatch : MonoBehaviour
     #endregion
 
     #region Move
-    public FlashStorm.FSAction moveAction;
     [Range(1, 5)]
     public float moveSpeed;
 
@@ -87,13 +86,13 @@ public class FreedomWatch : MonoBehaviour
                 acceleration = 3;
             else if (Input.GetKeyUp(KeyCode.LeftShift))
                 acceleration = 1;
+
             if (Input.GetKey(KeyCode.W))
             {
                 float thelt = transform.localEulerAngles.y * Mathf.PI / 180;
                 forwardVec3 = GetDirectionVec3(thelt);
                 Vector3 tempVec3 = transform.position + forwardVec3 * Time.deltaTime * moveSpeed * acceleration;
                 transform.position = CheckPosition(tempVec3);
-
             }
             else if (Input.GetKey(KeyCode.S))
             {
