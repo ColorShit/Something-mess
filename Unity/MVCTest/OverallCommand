@@ -1,0 +1,12 @@
+namespace FlashStorm
+{
+    public class ScaleOperate
+    {
+        public static void AdaptiveScreen(GameObject obj, float originWidth, float originHeight)
+        {
+            obj.transform.localScale = new Vector3(
+                Screen.width / originWidth,
+                Screen.height / originHeight);
+        }
+    }
+}q
