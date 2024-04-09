@@ -21,8 +21,7 @@ namespace FlashStorm
         public override void Enable()
         {
             Panel = UnityEngine.Object.Instantiate(Resources.Load<T>(panelPath), MainController.father_tree_node[level]);
-            float width = Screen.width, height = Screen.height;
-            Panel.BgImage.transform.localScale = new Vector3(width / 1920, height / 1080, 1);
+            AdaptiveScreen();
             OnEnable();
         }
 
@@ -49,6 +48,18 @@ namespace FlashStorm
         }
 
         public abstract void OnHidden();
+
+        protected void AdaptiveScreen()
+        {
+            float width = Screen.width, height = Screen.height;
+            Panel.BgImage.transform.localScale = new Vector3(width / 1920, height / 1080, 1);
+        }
+
+        protected void AdaptiveScreen(float Width, float Height)
+        {
+            float width = Screen.width, height = Screen.height;
+            Panel.BgImage.transform.localScale = new Vector3(width / Width, height / Height);
+        }
     }
 
     public abstract class FSView
