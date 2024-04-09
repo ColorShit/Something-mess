@@ -5,6 +5,7 @@ namespace FlashStorm
 {
     public abstract class FSPanel : MonoBehaviour
     {
+        //Put all of component into a parent Empty GameObject
         public GameObject BgImage;
         public Button ReturnBtn;
     }
