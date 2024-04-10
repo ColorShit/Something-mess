@@ -55,6 +55,8 @@ namespace FlashStorm
                 tempView = Activator.CreateInstance(tempType) as FSView;
                 dicView.Add(tempType, tempView);
             }
+            FSView.CheckInterfaceOnShow(tempType, tempView);
+            FSView.CheckInterfaceOnHide(tempType, tempView);
             return tempView;
         }
         public FSModel ConnectModel(string typename)
@@ -71,6 +73,7 @@ namespace FlashStorm
                 Where(t => baseType.IsAssignableFrom(t));
             foreach (var item in types)
             {
+                Debug.Log(item.Name);
                 InstantiateModel(item.Name);
             }
         }
@@ -100,7 +103,7 @@ namespace FlashStorm
             PushStack(firstName);
         }
 
-        public FreedomWatch mainCamera;
         public Transform specUILayer { get; set; }
     }
 }
+
