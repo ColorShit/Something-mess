@@ -35,15 +35,12 @@ namespace FlashStorm
 
         public override void Show()
         {
-            OnShow();
+            ShowAction?.Invoke();
         }
-        public abstract void OnShow();
-
         public override void Hidden()
         {
-            OnHidden();
+            HiddenAction?.Invoke();
         }
-        public abstract void OnHidden();
     }
 
     public abstract class FSView
@@ -51,7 +48,25 @@ namespace FlashStorm
         public abstract void Enable();
         public abstract void Close();
         public abstract void Show();
+        protected FSAction ShowAction;
         public abstract void Hidden();
+        protected FSAction HiddenAction;
+        public static void CheckInterfaceOnShow(Type childView, FSView originalView)
+        {
+            if (typeof(IViewOnShow).IsAssignableFrom(childView))
+            {
+                MethodInfo methodInfo = childView.GetMethod("OnShow");
+                originalView.ShowAction += () => { methodInfo.Invoke(originalView, new object[] { }); };
+            }
+        }
+        public static void CheckInterfaceOnHide(Type childView, FSView originalView)
+        {
+            if (typeof(IViewOnHidden).IsAssignableFrom(childView))
+            {
+                MethodInfo methodInfo = childView.GetMethod("OnHidden");
+                originalView.HiddenAction += () => { methodInfo.Invoke(originalView, new object[] { }); };
+            }
+        }
     }
 
     [AttributeUsage(AttributeTargets.Class)]
@@ -66,3 +81,4 @@ namespace FlashStorm
         }
     }
 }
+
