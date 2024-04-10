@@ -1,0 +1,12 @@
+namespace FlashStorm
+{
+    public interface IViewOnShow
+    {
+        void OnShow();
+    }
+
+    public interface IViewOnHidden
+    {
+        void OnHidden();
+    }
+}
