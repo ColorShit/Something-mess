@@ -1,0 +1,80 @@
+using System;
+using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.UI;
+using TMPro;
+
+namespace FlashStorm
+{
+    [ExecuteAlways]
+    [RequireComponent(typeof(Image))]
+    public class FScrollBar :
+        MonoBehaviour,
+        IDragHandler,
+        IPointerDownHandler
+    {
+        public float m_value;
+
+        [SerializeField]
+        private RectTransform m_rectTransform;
+        private float m_width;
+        private float m_height;
+        private float m_perHandleLong;
+        private float m_leftXPoint;
+        private float m_firstPosX;
+        public float m_amount;
+        public RectTransform m_handleRect;
+        public TextMeshProUGUI m_showValue;
+        public TextMeshProUGUI m_additionShow;
+        void Awake()
+        {
+            if (m_rectTransform == null)
+                m_rectTransform = GetComponent<RectTransform>();
+            m_width = m_rectTransform.rect.width;
+            m_height = m_rectTransform.rect.height;
+            m_leftXPoint = m_rectTransform.position.x - m_width / 2;
+            m_perHandleLong = m_width / (m_amount + 1);
+            m_handleRect.sizeDelta = new Vector2(m_perHandleLong, m_height);
+            m_firstPosX = m_leftXPoint + m_perHandleLong / 2;
+            Reset();
+        }
+
+        private float originalPosX;
+        private float currentPosX;
+        public int currentPos;
+
+        public void OnDrag(PointerEventData eventData)
+        {
+            if (eventData.button == PointerEventData.InputButton.Left)
+            {
+                currentPosX = Input.mousePosition.x;
+                currentPos = (int)MathF.Round((currentPosX - m_firstPosX) / m_perHandleLong);
+                currentPos = (int)Mathf.Clamp(currentPos, 0, m_amount);
+                m_handleRect.position = new Vector2(
+                    m_firstPosX + currentPos * m_perHandleLong,
+                    m_rectTransform.position.y);
+                m_value = currentPos / m_amount;
+            }
+        }
+
+        public void OnPointerDown(PointerEventData eventData)
+        {
+            if (eventData.button == PointerEventData.InputButton.Left)
+            {
+                originalPosX = Input.mousePosition.x;
+                currentPos = (int)MathF.Round((originalPosX - m_firstPosX) / m_perHandleLong);
+                currentPos = (int)Mathf.Clamp(currentPos, 0, m_amount);
+                m_handleRect.position = new Vector2(
+                    m_firstPosX + currentPos * m_perHandleLong,
+                    m_rectTransform.position.y);
+                m_value = MathF.Round(currentPos / m_amount, 2);
+            }
+        }
+
+        public void Reset()
+        {
+            m_handleRect.position = new Vector2(m_firstPosX, m_rectTransform.position.y);
+            m_value = 0;
+        }
+    }
+}
