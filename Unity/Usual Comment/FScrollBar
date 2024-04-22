@@ -1,8 +1,13 @@
+// m_RectTransform /* parent node */
+//       m_valuePercent      /* child node */
+//       m_handlePercent     /* chile node */
+//
+//    you should make RectTransform.Pivot of (m_RectTransform and m_handlePercent) be (0, 0.5) 
+
 using System;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
-using TMPro;
 
 namespace FlashStorm
 {
@@ -13,8 +18,14 @@ namespace FlashStorm
         IDragHandler,
         IPointerDownHandler
     {
-        public float m_value;
+        private float m_Value;
+        public float M_value 
+        {
+            get { return MathF.Round(m_Value, 2); }
+            set { m_Value = value; } 
+        }
 
+        public int m_initPos;
         [SerializeField]
         private RectTransform m_rectTransform;
         private float m_width;
@@ -24,19 +35,23 @@ namespace FlashStorm
         private float m_firstPosX;
         public float m_amount;
         public RectTransform m_handleRect;
-        public TextMeshProUGUI m_showValue;
-        public TextMeshProUGUI m_additionShow;
+        public RectTransform m_valuePercent;
+
         void Awake()
         {
             if (m_rectTransform == null)
                 m_rectTransform = GetComponent<RectTransform>();
             m_width = m_rectTransform.rect.width;
             m_height = m_rectTransform.rect.height;
-            m_leftXPoint = m_rectTransform.position.x - m_width / 2;
+            m_leftXPoint = m_rectTransform.position.x;
             m_perHandleLong = m_width / (m_amount + 1);
             m_handleRect.sizeDelta = new Vector2(m_perHandleLong, m_height);
             m_firstPosX = m_leftXPoint + m_perHandleLong / 2;
-            Reset();
+            m_valuePercent.position = m_rectTransform.position;
+            m_handleRect.position = new Vector2(m_firstPosX + m_initPos * m_perHandleLong, m_rectTransform.position.y);
+            m_valuePercent.sizeDelta = new Vector2(m_initPos * m_perHandleLong, m_height);
+            M_value = 0;
+            currentPos = m_initPos;
         }
 
         private float originalPosX;
@@ -53,7 +68,9 @@ namespace FlashStorm
                 m_handleRect.position = new Vector2(
                     m_firstPosX + currentPos * m_perHandleLong,
                     m_rectTransform.position.y);
-                m_value = currentPos / m_amount;
+                m_valuePercent.sizeDelta = new Vector2(
+                    currentPos * m_perHandleLong, m_height);
+                M_value = currentPos / m_amount;
             }
         }
 
@@ -67,14 +84,17 @@ namespace FlashStorm
                 m_handleRect.position = new Vector2(
                     m_firstPosX + currentPos * m_perHandleLong,
                     m_rectTransform.position.y);
-                m_value = MathF.Round(currentPos / m_amount, 2);
+                m_valuePercent.sizeDelta = new Vector2(
+                    currentPos * m_perHandleLong, m_height);
+                M_value = currentPos / m_amount;
             }
         }
 
         public void Reset()
         {
+            m_valuePercent.sizeDelta = new Vector2(0, m_height);
             m_handleRect.position = new Vector2(m_firstPosX, m_rectTransform.position.y);
-            m_value = 0;
+            M_value = 0;
         }
     }
 }
