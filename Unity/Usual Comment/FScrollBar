@@ -48,10 +48,9 @@ namespace FlashStorm
             m_handleRect.sizeDelta = new Vector2(m_perHandleLong, m_height);
             m_firstPosX = m_leftXPoint + m_perHandleLong / 2;
             m_valuePercent.position = m_rectTransform.position;
-            m_handleRect.position = new Vector2(m_firstPosX + m_initPos * m_perHandleLong, m_rectTransform.position.y);
-            m_valuePercent.sizeDelta = new Vector2(m_initPos * m_perHandleLong, m_height);
             M_value = 0;
             currentPos = m_initPos;
+            RefreshRectTransform();
         }
 
         private float originalPosX;
@@ -65,11 +64,7 @@ namespace FlashStorm
                 currentPosX = Input.mousePosition.x;
                 currentPos = (int)MathF.Round((currentPosX - m_firstPosX) / m_perHandleLong);
                 currentPos = (int)Mathf.Clamp(currentPos, 0, m_amount);
-                m_handleRect.position = new Vector2(
-                    m_firstPosX + currentPos * m_perHandleLong,
-                    m_rectTransform.position.y);
-                m_valuePercent.sizeDelta = new Vector2(
-                    currentPos * m_perHandleLong, m_height);
+                RefreshRectTransform();
                 M_value = currentPos / m_amount;
             }
         }
@@ -81,13 +76,18 @@ namespace FlashStorm
                 originalPosX = Input.mousePosition.x;
                 currentPos = (int)MathF.Round((originalPosX - m_firstPosX) / m_perHandleLong);
                 currentPos = (int)Mathf.Clamp(currentPos, 0, m_amount);
-                m_handleRect.position = new Vector2(
-                    m_firstPosX + currentPos * m_perHandleLong,
-                    m_rectTransform.position.y);
-                m_valuePercent.sizeDelta = new Vector2(
-                    currentPos * m_perHandleLong, m_height);
+                RefreshRectTransform();
                 M_value = currentPos / m_amount;
             }
+        }
+
+        private void RefreshRectTransform()
+        {
+            m_handleRect.position = new Vector2(
+                    m_firstPosX + currentPos * m_perHandleLong,
+                    m_rectTransform.position.y);
+            m_valuePercent.sizeDelta = new Vector2(
+                currentPos * m_perHandleLong, m_height);
         }
 
         public void Reset()
