@@ -1,4 +1,10 @@
 //Custom Event
+public class CustomEventArgs : EventArgs
+{
+    public CustomEventArgs(string message) { Message = message; }
+    public string Message { get; set; }
+}
+
 public class CustomPublisher
 {
     public delegate void RaiseCustomEvent(CustomEventArgs e);
