@@ -14,7 +14,7 @@ namespace FSLibrary
             for (int i = 0; i < buttons.Length; i++)
             {
                 int temp = i;
-                buttons[i].onCLick.AddListener(() => { Switch(temp); });
+                buttons[i].onClick.AddListener(() => { Switch(temp); });
             }
         }
 
