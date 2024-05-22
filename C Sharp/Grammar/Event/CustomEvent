@@ -33,3 +33,13 @@ class CustomSubscriber
         Console.WriteLine($"{_id} receive this message: {e.Message}");
     }
 }
+
+public class MainPrograss
+{
+    public static void Main(string[] args)
+    {
+        var cusPub = new CustomPublisher();
+        var cusSub = new CustomSubscriber("CusSub1", cusPub);
+        cusPub.DoSth();
+    }
+}
