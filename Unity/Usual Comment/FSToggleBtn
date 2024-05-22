@@ -41,9 +41,7 @@ namespace FSLibrary
             if (eventData.button == PointerEventData.InputButton.Left)
             {
                 if (!m_Selected)
-                {
                     Select();
-                }
                 onClick.Invoke();
             }
         }
