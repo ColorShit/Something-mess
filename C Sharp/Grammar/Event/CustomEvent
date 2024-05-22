@@ -1,0 +1,35 @@
+//Custom Event
+public class CustomPublisher
+{
+    public delegate void RaiseCustomEvent(CustomEventArgs e);
+
+    public event RaiseCustomEvent? raiseCustomEvent;
+
+    public void DoSth()
+    {
+        OnRaiseCustomEvent(new CustomEventArgs("new triggers"));
+    }
+
+    protected virtual void OnRaiseCustomEvent(CustomEventArgs e)
+    {
+        RaiseCustomEvent? raiseEvent = raiseCustomEvent;
+        if (raiseEvent != null)
+        {
+            e.Message += $"at {DateTime.Now}";
+            raiseEvent(e);
+        }
+    }
+}
+class CustomSubscriber
+{
+    private readonly string _id;
+    public CustomSubscriber(string id, CustomPublisher pub)
+    {
+        _id= id;
+        pub.raiseCustomEvent += HandleCustomEvent;
+    }
+    void HandleCustomEvent(CustomEventArgs e)
+    {
+        Console.WriteLine($"{_id} receive this message: {e.Message}");
+    }
+}
