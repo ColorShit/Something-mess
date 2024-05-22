@@ -1,0 +1,49 @@
+using UnityEngine;
+
+namespace FSLibrary
+{
+    public class FSToggle : MonoBehaviour
+    {
+        public FSToggleBtn[] buttons;
+
+        [SerializeField]
+        private int current_SerialNumber;
+        private void Awake()
+        {
+            current_SerialNumber = -1;
+            for (int i = 0; i < buttons.Length; i++)
+            {
+                int temp = i;
+                buttons[i].onCLick.AddListener(() => { Switch(temp); });
+            }
+        }
+
+        public FSAction<int> OnSelectEvent;
+        public FSAction<int> UnSelectEvent;
+
+        public void Switch(int n)
+        {
+            if (n == current_SerialNumber)
+            {
+                buttons[current_SerialNumber].UnSelect();
+                UnSelectEvent?.Invoke(current_SerialNumber);
+                current_SerialNumber = -1;
+                return;
+            }
+            if (current_SerialNumber != -1)
+            {
+                buttons[current_SerialNumber].UnSelect();
+                UnSelectEvent?.Invoke(current_SerialNumber);
+            }
+            OnSelectEvent?.Invoke(n);
+            current_SerialNumber = n;
+        }
+
+        public void Revert()
+        {
+            if (current_SerialNumber == -1)
+                return;
+            Switch(current_SerialNumber);
+        }
+    }
+}
