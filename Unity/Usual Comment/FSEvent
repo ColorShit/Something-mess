@@ -1,0 +1,12 @@
+namespace FSLibrary
+{
+    public class FSEvent
+    {
+        public FSEvent() => m_Action = null;
+        private System.Action m_Action;
+        public void Invoke() { if (m_Action != null) m_Action(); }
+        public void AddListener(FSAction action) => m_Action += action;
+        public void RemoveListener(FSAction action) => m_Action -= action;
+        public void RemoveAllListener() => m_Action = null;
+    }
+}
