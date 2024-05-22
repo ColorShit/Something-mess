@@ -5,66 +5,60 @@ using FSLibrary;
 
 namespace FSLibrary
 {
-
-
-public class FSToggleBtn : MonoBehaviour,
-    IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler
-{
-    public FSEvent onCLick = new FSEvent();
-
-    [SerializeField]
-    private Image m_Image;
-    [SerializeField]
-    private Sprite m_normalSprite;
-    [SerializeField]
-    private Sprite m_selectSprite;
-    [SerializeField]
-    private Sprite m_hoverSprite;
-    internal bool m_Select;
-    private void Start()
+    public class FSToggleBtn : MonoBehaviour,
+        IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler
     {
-        if (m_Image == null)
-            m_Image = GetComponent<Image>();
-        m_Select = false;
-    }
+        public FSEvent onClick = new FSEvent();
 
-    public void Select()
-    {
-        m_Select = true;
-        m_Image.sprite = m_selectSprite;
-        onCLick.Invoke();
-    }
-    public void UnSelect()
-    {
-        m_Select = false;
-        m_Image.sprite = m_normalSprite;
-    }
-
-    public void OnPointerClick(PointerEventData eventData)
-    {
-        if (eventData.button == PointerEventData.InputButton.Left)
+        [SerializeField]
+        private Image m_Image;
+        [SerializeField]
+        private Sprite m_normalSprite;
+        [SerializeField]
+        private Sprite m_selectSprite;
+        [SerializeField]
+        private Sprite m_hoverSprite;
+        internal bool m_Selected;
+        private void Start()
         {
-            if (!m_Select)
+            if (m_Image == null)
+                m_Image = GetComponent<Image>();
+            m_Selected = false;
+        }
+
+        public void Select()
+        {
+            m_Selected = true;
+            m_Image.sprite = m_selectSprite;
+        }
+        public void UnSelect()
+        {
+            m_Selected = false;
+            m_Image.sprite = m_normalSprite;
+        }
+
+        public void OnPointerClick(PointerEventData eventData)
+        {
+            if (eventData.button == PointerEventData.InputButton.Left)
             {
-                Select();
-            }
-            else
-            {
-                onCLick.Invoke();
+                if (!m_Selected)
+                {
+                    Select();
+                }
+                onClick.Invoke();
             }
         }
-    }
 
-    public void OnPointerEnter(PointerEventData eventData)
-    {
-        if (!m_Select)
-            m_Image.sprite = m_hoverSprite;
-    }
+        public void OnPointerEnter(PointerEventData eventData)
+        {
+            if (!m_Selected)
+                m_Image.sprite = m_hoverSprite;
+        }
 
-    public void OnPointerExit(PointerEventData eventData)
-    {
-        if (!m_Select)
-            m_Image.sprite = m_normalSprite;
+        public void OnPointerExit(PointerEventData eventData)
+        {
+            if (!m_Selected)
+                m_Image.sprite = m_normalSprite;
+        }
     }
-}
 }
