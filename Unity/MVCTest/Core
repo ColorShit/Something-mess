@@ -1,0 +1,350 @@
+using System;
+using System.Collections.Generic;
+using UnityEngine;
+using System.Linq;
+using System.Reflection;
+using UnityEngine.UI;
+using UnityEngine.SceneManagement;
+
+namespace FSLibrary.CoreModule
+{
+    public class Core
+    {
+        private static Dictionary<Type, FSView> dicView = new Dictionary<Type, FSView>();
+        private static Dictionary<string, FSModel> dicModel = new Dictionary<string, FSModel>();
+        public static Transform[] nodes;
+        private MVPCustomStack stack;
+
+        public Core()
+        {
+            stack = new MVPCustomStack();
+            InstantiateModelAll();
+        }
+
+        public void PushStack<T>() where T : FSView
+        {
+            FSView tempView = InstantiateView(typeof(T).Name);
+            stack.Push(tempView);
+        }
+        public void PushStack(string name)
+        {
+            FSView tempView = InstantiateView(name);
+            stack.Push(tempView);
+        }
+        public void ReplaceStack<T>() where T : FSView
+        {
+            FSView tempView = InstantiateView(typeof(T).Name);
+            stack.Replace(tempView);
+        }
+        private FSView InstantiateView(string typename)
+        {
+            FSView tempView;
+            Type tempType = Type.GetType(typename);
+            dicView.TryGetValue(tempType, out tempView);
+            if (tempView == null)
+            {
+                tempView = Activator.CreateInstance(tempType) as FSView;
+                dicView.Add(tempType, tempView);
+            }
+            FSView.CheckInterfaceOnShow(tempType, tempView);
+            FSView.CheckInterfaceOnHide(tempType, tempView);
+            return tempView;
+        }
+        internal static FSModel ConnectModel(string typename)
+        {
+            FSModel model;
+            dicModel.TryGetValue(typename, out model);
+            return model;
+        }
+        private void InstantiateModelAll()
+        {
+            Type baseType = typeof(FSModel);
+            var types = Assembly.GetExecutingAssembly().GetTypes().
+                Where(t => t.IsClass && !t.IsAbstract).
+                Where(t => baseType.IsAssignableFrom(t));
+            foreach (var item in types)
+            {
+                Debug.Log(item.Name);
+                InstantiateModel(item.Name);
+            }
+        }
+        private void InstantiateModel(string name)
+        {
+            FSModel tempModel = Activator.CreateInstance(Type.GetType(name)) as FSModel;
+            dicModel.Add(name, tempModel);
+        }
+
+        public void PopStack()
+        {
+            stack.Pop();
+        }
+
+        /// <summary>
+        /// Controller will pop up parameter(s) until remain m parameter(s)
+        /// </summary>
+        public void PopStack(int m)
+        {
+            int n = stack.Size() - m, i = 0;
+            while (i < n)
+            {
+                stack.Pop();
+                i++;
+            }
+        }
+
+        private class MVPCustomStack
+        {
+            private FSView[] stack;
+            private int length = 0;
+            public MVPCustomStack() { }
+            public MVPCustomStack(FSView data)
+            {
+                stack = new FSView[] { data };
+            }
+
+            public void Push(FSView data)
+            {
+                if (stack == null || length == 0)
+                {
+                    stack = new FSView[] { data };
+                    length++;
+                }
+                else
+                {
+                    stack[length - 1].Hidden();
+                    try
+                    {
+                        stack[length] = data;
+                    }
+                    catch (Exception)
+                    {
+                        FSView[] tempStack = new FSView[length * 2];
+                        Array.Copy(stack, tempStack, length);
+                        tempStack[length] = data;
+                        stack = tempStack;
+                    }
+                    length++;
+                }
+                data.Enable();
+            }
+
+            public void Replace(FSView data)
+            {
+                data.Enable();
+                if (length == 0)
+                {
+                    stack = new FSView[] { data };
+                    length++;
+                    return;
+                }
+                stack[length - 1].Close();
+                stack[length - 1] = data;
+            }
+
+            public void Pop()
+            {
+                if (length != 0)
+                {
+                    length--;
+                    stack[length].Close();
+                    stack[length] = null;
+                    if (length == 0)
+                        return;
+                    stack[length - 1].Show();
+                }
+            }
+
+            public FSView Top()
+            {
+                if (length != 0)
+                    return stack[length - 1];
+                return null;
+            }
+
+            public FSView Last()
+            {
+                if (length != 0)
+                    return stack[0];
+                return null;
+            }
+
+            public bool Empty()
+            {
+                return (length == 0) ? true : false;
+            }
+
+            public int Size()
+            {
+                return length;
+            }
+        }
+    }
+
+    public abstract class FSView<T, F> : FSView where T : FSPanel where F : FSModel
+    {
+        protected T Panel;
+        protected F Model;
+        private string panelPath;
+        private byte level;
+        private byte sceneNum;
+        private bool isSwitchScene;
+        private bool loadMode;
+        public FSView()
+        {
+            var route = GetType().GetCustomAttribute<MVPAttribute>();
+            panelPath = route.path;
+            level = (byte)route.treeLevel;
+            sceneNum = route.sceneNum;
+            isSwitchScene = route.m_Switch;
+            loadMode = route.loadMode;
+            Model = Core.ConnectModel(typeof(F).Name) as F;
+        }
+        public override void Enable()
+        {
+            Panel = UnityEngine.Object.Instantiate(Resources.Load<T>(panelPath), Core.nodes[level]);
+            Panel.BgImage.transform.localScale = new Vector3(Screen.width / 1920f, Screen.height / 1080f, 1);
+            ConfirmSwitchScene();
+            OnEnable();
+        }
+        public abstract void OnEnable();
+        public override void Close()
+        {
+            GameObject.Destroy(Panel.gameObject);
+            OnClose();
+        }
+        public abstract void OnClose();
+
+        public override void Show()
+        {
+            Panel.BgImage.transform.localScale = new Vector3(Screen.width / 1920f, Screen.height / 1080f, 1);
+            ConfirmSwitchScene();
+            ShowAction?.Invoke();
+        }
+        public override void Hidden()
+        {
+            HiddenAction?.Invoke();
+        }
+        private void ConfirmSwitchScene()
+        {
+            int tempNum = MainController.instance.currentScene;
+            if (tempNum == sceneNum)
+            {
+                Debug.Log("We maybe switch Scene");
+                if (isSwitchScene)
+                {
+                    if (loadMode)
+                    {
+                        BeforeLoadScene();
+                        MainController.instance.SwitchSceneAsync(sceneNum, EndLoadScene);
+                    }
+                    else
+                    {
+                        SceneManager.LoadScene(sceneNum);
+                        MainController.instance.currentScene = sceneNum;
+                    }
+                }
+            }
+            else
+            {
+                Debug.Log("We must switch Scene");
+                if (loadMode)
+                {
+                    BeforeLoadScene();
+                    MainController.instance.SwitchSceneAsync(sceneNum, EndLoadScene);
+                }
+                else
+                {
+                    SceneManager.LoadScene(sceneNum);
+                    MainController.instance.currentScene = sceneNum;
+                }
+            }
+        }
+        public virtual void BeforeLoadScene() { }
+        public virtual void EndLoadScene() { }
+    }
+
+    public abstract class FSView
+    {
+        public abstract void Enable();
+        public abstract void Close();
+        public abstract void Show();
+        protected Action ShowAction;
+        public abstract void Hidden();
+        protected Action HiddenAction;
+        public static void CheckInterfaceOnShow(Type childView, FSView originalView)
+        {
+            if (typeof(IViewOnShow).IsAssignableFrom(childView))
+            {
+                MethodInfo methodInfo = childView.GetMethod("OnShow");
+                originalView.ShowAction += () => { methodInfo.Invoke(originalView, new object[] { }); };
+            }
+        }
+        public static void CheckInterfaceOnHide(Type childView, FSView originalView)
+        {
+            if (typeof(IViewOnHidden).IsAssignableFrom(childView))
+            {
+                MethodInfo methodInfo = childView.GetMethod("OnHidden");
+                originalView.HiddenAction += () => { methodInfo.Invoke(originalView, new object[] { }); };
+            }
+        }
+    }
+
+    /// <summary>
+    /// Path : Resources.Load(path)
+    /// treeLevel : Select on "Level" and put key "F12" down
+    /// sceneNum : The scene position this View should be.
+    /// loadMode : default is false that LoadScene, true is LoadSceneAsync
+    /// m_Switch : if current scene is 0, this view's sceneNum is 0, 
+    ///            and whether you will reload this scene.
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Class)]
+    public class MVPAttribute : Attribute
+    {
+        public string path;
+        public Level treeLevel;
+        public byte sceneNum;
+        public bool loadMode;
+        public bool m_Switch;
+        public MVPAttribute(
+            string Path,
+            Level level,
+            byte SceneNum = 0,
+            bool Mode = false,
+            bool m_switch = false
+            )
+        {
+            path = Path;
+            treeLevel = level;
+            sceneNum = SceneNum;
+            loadMode = Mode;
+            m_Switch = m_switch;
+        }
+    }
+
+    public abstract class FSPanel : MonoBehaviour
+    {
+        //Put all of GameObjects into a parent Empty GameObject
+        public GameObject BgImage;
+        public Button ReturnBtn;
+    }
+
+    public abstract class FSModel { }
+
+    public interface IViewOnShow
+    {
+        void OnShow();
+    }
+
+    public interface IViewOnHidden
+    {
+        void OnHidden();
+    }
+
+    public enum Level
+    {
+        Top = 0,    //Most Top, none UI can occlusion.
+        Middle = 1,
+        Bottom = 2
+    }
+}
+
