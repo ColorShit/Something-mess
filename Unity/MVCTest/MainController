@@ -1,59 +1,62 @@
-using FSLibrary.CoreModule;
 using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-public class MainController : MonoBehaviour
+namespace FSLibrary.CoreModule
 {
-    public static MainController instance = null;
-    public Transform[] nodes;
-    public string firstName;
-    public Transform specUILevel;
+    public class MainController : MonoBehaviour
+    {
+        public static MainController instance = null;
+        public Transform[] nodes;
+        public string firstName;
+        public Transform specUILevel;
 
-    private void Awake()
-    {
-        if (instance == null)
+        private void Awake()
         {
-            instance = this;
-            DontDestroyOnLoad(gameObject);
-        }
-        else if (instance != this)
-        {
-            Destroy(gameObject);
-            return;
-        }
-        core = new Core();
-        Core.nodes = nodes;
-        specUILevel = nodes[2];
-        currentScene = 0;
-        core.PushStack(firstName);
-    }
-    public Core core { get; private set; }
-
-    public void SwitchSceneAsync(
-        int sceneNum,
-        Action AsyonEvent)
-    {
-        loadSceneAsync = SceneManager.LoadSceneAsync(sceneNum);
-        asyncEvent = AsyonEvent;
-        StartCoroutine("LoadSceneIenumerator");
-        currentScene = sceneNum;
-    }
-    public int currentScene { get; set; }
-    Action asyncEvent;
-    AsyncOperation loadSceneAsync;
-    IEnumerator LoadSceneIenumerator()
-    {
-        while (true)
-        {
-            if (loadSceneAsync.isDone)
+            if (instance == null)
             {
-                StopCoroutine("LoadSceneIenumerator");
-                asyncEvent();
-                asyncEvent = null;
+                instance = this;
+                DontDestroyOnLoad(gameObject);
             }
-            yield return null;
+            else if (instance != this)
+            {
+                Destroy(gameObject);
+                return;
+            }
+            core = new Core();
+            Core.nodes = nodes;
+            specUILevel = nodes[2];
+            currentScene = 0;
+            core.PushStack(firstName);
+        }
+        public Core core { get; private set; }
+
+        public void SwitchSceneAsync(
+            int sceneNum,
+            Action AsyonEvent)
+        {
+            loadSceneAsync = SceneManager.LoadSceneAsync(sceneNum);
+            asyncEvent = AsyonEvent;
+            StartCoroutine("LoadSceneIenumerator");
+            currentScene = sceneNum;
+        }
+        public int currentScene { get; set; }
+        Action asyncEvent;
+        AsyncOperation loadSceneAsync;
+        IEnumerator LoadSceneIenumerator()
+        {
+            while (true)
+            {
+                if (loadSceneAsync.isDone)
+                {
+                    StopCoroutine("LoadSceneIenumerator");
+                    asyncEvent();
+                    asyncEvent = null;
+                }
+                yield return null;
+            }
         }
     }
+
 }
