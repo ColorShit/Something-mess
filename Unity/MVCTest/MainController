@@ -1,109 +1,59 @@
-using UnityEngine;
-using System.Collections.Generic;
-using System.Reflection;
+using FSLibrary.CoreModule;
 using System;
-using System.Linq;
+using System.Collections;
+using UnityEngine;
+using UnityEngine.SceneManagement;
 
-namespace FlashStorm
+public class MainController : MonoBehaviour
 {
-    public class MainController : MonoBehaviour
+    public static MainController instance = null;
+    public Transform[] nodes;
+    public string firstName;
+    public Transform specUILevel;
+
+    private void Awake()
     {
-        #region Single Mode
-        public static MainController instance;
-        private void Awake()
+        if (instance == null)
         {
             instance = this;
-            stack = new FStack();
-            dicView = new Dictionary<Type, FSView>();
-            dicModel = new Dictionary<string, FSModel>();
-            InstantiateModelAll();
-            father_tree_node = ftn;
-            specUILayer = ftn[0];
+            DontDestroyOnLoad(gameObject);
         }
-        #endregion
-        public static Transform[] father_tree_node;
-        public Transform[] ftn;
-        public string firstName;
+        else if (instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+        core = new Core();
+        Core.nodes = nodes;
+        specUILevel = nodes[2];
+        currentScene = 0;
+        core.PushStack(firstName);
+    }
+    public Core core { get; private set; }
 
-        private Dictionary<Type, FSView> dicView;
-        private Dictionary<string, FSModel> dicModel;
-
-        #region Stack Operations
-        private FStack stack;
-        public void PushStack<T>() where T : FSView
+    public void SwitchSceneAsync(
+        int sceneNum,
+        Action AsyonEvent)
+    {
+        loadSceneAsync = SceneManager.LoadSceneAsync(sceneNum);
+        asyncEvent = AsyonEvent;
+        StartCoroutine("LoadSceneIenumerator");
+        currentScene = sceneNum;
+    }
+    public int currentScene { get; set; }
+    Action asyncEvent;
+    AsyncOperation loadSceneAsync;
+    IEnumerator LoadSceneIenumerator()
+    {
+        while (true)
         {
-            FSView tempView = InstantiateView(typeof(T).Name);
-            stack.Push(tempView);
-        }
-        public void PushStack(string name)
-        {
-            FSView tempView = InstantiateView(name);
-            stack.Push(tempView);
-        }
-        public void ReplaceStack<T>() where T : FSView
-        {
-            FSView tempView = InstantiateView(typeof(T).Name);
-            stack.Replace(tempView);
-        }
-        private FSView InstantiateView(string typename)
-        {
-            FSView tempView;
-            Type tempType = Type.GetType(typename);
-            dicView.TryGetValue(tempType, out tempView);
-            if (tempView == null)
+            if (loadSceneAsync.isDone)
             {
-                tempView = Activator.CreateInstance(tempType) as FSView;
-                dicView.Add(tempType, tempView);
+                StopCoroutine("LoadSceneIenumerator");
+                asyncEvent();
+                asyncEvent = null;
             }
-            FSView.CheckInterfaceOnShow(tempType, tempView);
-            FSView.CheckInterfaceOnHide(tempType, tempView);
-            return tempView;
+            yield return null;
         }
-        public FSModel ConnectModel(string typename)
-        {
-            FSModel model;
-            dicModel.TryGetValue(typename, out model);
-            return model;
-        }
-        private void InstantiateModelAll()
-        {
-            Type baseType = typeof(FSModel);
-            var types = Assembly.GetExecutingAssembly().GetTypes().
-                Where(t => t.IsClass && !t.IsAbstract).
-                Where(t => baseType.IsAssignableFrom(t));
-            foreach (var item in types)
-            {
-                Debug.Log(item.Name);
-                InstantiateModel(item.Name);
-            }
-        }
-        private void InstantiateModel(string name)
-        {
-            FSModel tempModel = Activator.CreateInstance(Type.GetType(name)) as FSModel;
-            dicModel.Add(name, tempModel);
-        }
-
-        public void PopStack()
-        {
-            stack.Pop();
-        }
-        public void PopStack(int m)
-        {
-            int n = stack.Size() - m, i = 0;
-            while (i < n)
-            {
-                stack.Pop();
-                i++;
-            }
-        }
-        #endregion
-
-        private void Start()
-        {
-            PushStack(firstName);
-        }
-
-        public Transform specUILayer { get; set; }
     }
 }
-
