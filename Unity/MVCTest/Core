@@ -12,7 +12,7 @@ namespace FSLibrary.CoreModule
     {
         private static Dictionary<Type, FSView> dicView = new Dictionary<Type, FSView>();
         private static Dictionary<string, FSModel> dicModel = new Dictionary<string, FSModel>();
-        public static Transform[] nodes;
+        internal static Transform[] nodes;
         private MVPCustomStack stack;
 
         public Core()
