@@ -229,7 +229,6 @@ namespace FSLibrary.CoreModule
             int tempNum = MainController.instance.currentScene;
             if (tempNum == sceneNum)
             {
-                Debug.Log("We maybe switch Scene");
                 if (isSwitchScene)
                 {
                     if (loadMode)
@@ -246,7 +245,6 @@ namespace FSLibrary.CoreModule
             }
             else
             {
-                Debug.Log("We must switch Scene");
                 if (loadMode)
                 {
                     BeforeLoadScene();
