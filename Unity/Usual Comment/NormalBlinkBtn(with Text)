@@ -6,7 +6,7 @@ using UnityEngine.UI;
 using FSLibrary;
 using TMPro;
 
-public class DisplayBtn : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler, IPointerDownHandler, IPointerUpHandler
+public class NormalBlinkBtn : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler, IPointerDownHandler, IPointerUpHandler
 {
     public FSButtonClickedEvent onClick = new FSButtonClickedEvent();
 
