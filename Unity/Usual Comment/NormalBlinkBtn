@@ -1,0 +1,155 @@
+//with Image and TextMeshProUGUI 
+using System.Collections;
+using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.UI;
+using FSLibrary;
+using TMPro;
+
+public class DisplayBtn : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler, IPointerDownHandler, IPointerUpHandler
+{
+    public FSButtonClickedEvent onClick = new FSButtonClickedEvent();
+
+    public Image m_Image;
+    public Image blinkImg;
+    public TextMeshProUGUI m_Text;
+
+    public Color m_NormalColor;
+    public Color m_EnterColor;
+    public Color m_PressColor;
+    public Color m_DisableColor;
+    public Color m_TextNormalColor;
+    public Color m_TextEnterColor;
+    public Color m_TextPressColor;
+
+    bool m_Pressed;
+    bool m_Entered;
+
+    private void Awake()
+    {
+        if (m_Image == null)
+            m_Image = GetComponent<Image>();
+        m_Pressed = false;
+        m_Entered = false;
+        enabled = true;
+    }
+
+    public void StartBlink(FSAction action)
+    {
+        blinkImg.color = new Color(
+            blinkImgColor.r, blinkImgColor.g, blinkImgColor.b, 0);
+        blinkDir = true;
+        onClick.AddListener(action);
+        onClick.AddListener(StopBlink);
+        blinkImg.gameObject.SetActive(true);
+        alphaValue = 0;
+        enabled = true;
+        StartCoroutine("Blink");
+    }
+
+    public void StopBlink()
+    {
+        StopCoroutine("Blink");
+        blinkImg.gameObject.SetActive(false);
+        onClick.RemoveAllListener();
+    }
+
+    public bool blinkDir;
+    private float alphaValue;
+    public Color blinkImgColor;
+    protected IEnumerator Blink()
+    {
+        while (true)
+        {
+            if (blinkDir)
+            {
+                alphaValue += 2.5f * Time.deltaTime;
+                blinkImg.color = new Color(
+                    blinkImgColor.r, blinkImgColor.g, blinkImgColor.b, alphaValue);
+                if (alphaValue >= 1)
+                    blinkDir = !blinkDir;
+            }
+            else
+            {
+                alphaValue -= 2.5f * Time.deltaTime;
+                blinkImg.color = new Color(
+                    blinkImgColor.r, blinkImgColor.g, blinkImgColor.b, alphaValue);
+                if (alphaValue <= 0)
+                    blinkDir = !blinkDir;
+            }
+            yield return null;
+        }
+    }
+
+
+
+    public void OnPointerClick(PointerEventData eventData)
+    {
+        if (eventData.button == PointerEventData.InputButton.Left)
+        {
+            onClick.Invoke();
+        }
+    }
+
+    public void OnPointerDown(PointerEventData eventData)
+    {
+        if (eventData.button == PointerEventData.InputButton.Left)
+        {
+            m_Pressed = true;
+            m_Image.color = m_PressColor;
+            m_Text.color = m_TextPressColor;
+        }
+    }
+
+    public void OnPointerUp(PointerEventData eventData)
+    {
+        if (eventData.button == PointerEventData.InputButton.Left)
+        {
+            m_Pressed = false;
+            if (m_Entered)
+            {
+                m_Image.color = m_EnterColor;
+                m_Text.color = m_TextEnterColor;
+            }
+            else
+            {
+                m_Image.color = m_NormalColor;
+                m_Text.color = m_TextNormalColor;
+            }
+        }
+    }
+
+    public void OnPointerEnter(PointerEventData eventData)
+    {
+        m_Entered = true;
+        if (!m_Pressed)
+        {
+            m_Image.color = m_EnterColor;
+            m_Text.color = m_TextEnterColor;
+        }
+    }
+
+    public void OnPointerExit(PointerEventData eventData)
+    {
+        m_Entered = false;
+        if (!m_Pressed)
+        {
+            m_Image.color = m_NormalColor;
+            m_Text.color = m_TextNormalColor;
+        }
+    }
+
+    private void OnEnable()
+    {
+        m_Image.color = m_NormalColor;
+        m_Text.color = m_NormalColor;
+    }
+
+    private void OnDisable()
+    {
+        m_Image.color = m_DisableColor;
+        m_Text.color = m_DisableColor;
+        m_Entered = false;
+        m_Pressed = false;
+    }
+}
