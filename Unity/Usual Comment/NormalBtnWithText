@@ -1,15 +1,14 @@
 //with Image and TextMeshProUGUI 
-using System.Collections;
-using UnityEngine;
-using UnityEngine.EventSystems;
-using UnityEngine.UI;
 using FSLibrary;
+using UnityEngine;
+using UnityEngine.UI;
+using UnityEngine.EventSystems;
 using TMPro;
 
-public class NormalBtnWithText : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler, IPointerDownHandler, IPointerUpHandler
+public class NormalBtnWithText : MonoBehaviour, IPointerEnterHandler,
+    IPointerExitHandler, IPointerClickHandler, IPointerDownHandler, IPointerUpHandler
 {
     public FSButtonClickedEvent onClick = new FSButtonClickedEvent();
-
     public Image m_Image;
     public TextMeshProUGUI m_Text;
 
@@ -20,17 +19,24 @@ public class NormalBtnWithText : MonoBehaviour, IPointerEnterHandler, IPointerEx
     public Color m_TextNormalColor;
     public Color m_TextEnterColor;
     public Color m_TextPressColor;
+    public Color m_TextDisableColor;
 
-    bool m_Pressed;
-    bool m_Entered;
+    private bool m_Pressed;
+    private bool m_Entered;
 
-    private void Awake()
+    void Awake()
     {
         if (m_Image == null)
             m_Image = GetComponent<Image>();
         m_Pressed = false;
         m_Entered = false;
         enabled = true;
+    }
+
+    private void OnEnable()
+    {
+        m_Image.color = m_NormalColor;
+        m_Text.color = m_TextNormalColor;
     }
 
     public void OnPointerClick(PointerEventData eventData)
@@ -50,7 +56,6 @@ public class NormalBtnWithText : MonoBehaviour, IPointerEnterHandler, IPointerEx
             m_Text.color = m_TextPressColor;
         }
     }
-
     public void OnPointerUp(PointerEventData eventData)
     {
         if (eventData.button == PointerEventData.InputButton.Left)
@@ -89,17 +94,12 @@ public class NormalBtnWithText : MonoBehaviour, IPointerEnterHandler, IPointerEx
         }
     }
 
-    private void OnEnable()
-    {
-        m_Image.color = m_NormalColor;
-        m_Text.color = m_NormalColor;
-    }
-
     private void OnDisable()
     {
         m_Image.color = m_DisableColor;
-        m_Text.color = m_DisableColor;
+        m_Text.color = m_TextDisableColor;
         m_Entered = false;
         m_Pressed = false;
     }
 }
+
