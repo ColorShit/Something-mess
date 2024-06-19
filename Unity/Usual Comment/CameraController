@@ -1,131 +1,160 @@
+using System;
 using UnityEngine;
+using System.Collections;
 
 public class CameraController : MonoBehaviour
 {
-        public Camera cameraMain;
-        [SerializeField]
-        private int moveSpeed = 100;
+    public Camera cameraMain;
+    [SerializeField]
+    private int moveSpeed = 100;
 
-        normalClickOperator computeOperator;
-        private Vector3 tarPos;
-        private Vector3 framePos;
+    Action computeOperator;
+    Action endOperate;
+    private Vector3 tarPos;
+    private Vector3 framePos;
 
-        private float tarFoV;
-        private float frameFoV;
+    private float tarFoV;
+    private float frameFoV;
 
-        private Vector3 initialRot;
-        private Vector3 tarRot;
-        private Vector3 frameRot;
-        private Vector3 hasRotEular = Vector3.zero;
-        private float RotX;
-        private float RotY;
+    private Vector3 initialRot;
+    private Vector3 tarRot;
+    private Vector3 frameRot;
+    private Vector3 hasRotEular = Vector3.zero;
 
-        public void CameraTranslate(Vector3 pos)
-        {
-            SetPos(pos);
-        }
-        public void CameraTranslate(float fov)
-        {
-            SetFov(fov);
-        }
-        public void CameraTranslate(Vector3 pos, float fov)
-        {
-            SetPos(pos);
-            SetFov(fov);
-        }
-        public void CameraTranslate(Vector3 pos, Vector3 rot)
-        {
-            SetPos(pos);
-            SetRot(rot);
-        }
-        public void CameraTranslate(Vector3 pos, Vector3 rot, float fov)
-        {
-            SetPos(pos);
-            SetFov(fov);
-            SetRot(rot);
-        }
+    public void CameraTranslate(Vector3 pos, Action action)
+    {
+        endOperate = action;
+        SetPos(pos);
+        StartCoroutine("Frame");
+    }
+    public void CameraTranslate(float fov)
+    {
+        SetFov(fov);
+        StartCoroutine("Frame");
+    }
+    public void CameraTranslate(Vector3 pos, float fov)
+    {
+        SetPos(pos);
+        SetFov(fov);
+        StartCoroutine("Frame");
+    }
+    public void CameraTranslate(Vector3 pos, Vector3 rot, Action action)
+    {
+        endOperate = action;
+        SetPos(pos);
+        SetRot(rot);
+        StartCoroutine("Frame");
+    }
+    public void CameraTranslate(Vector3 pos, Vector3 rot, float fov, Action action)
+    {
+        endOperate = action;
+        SetPos(pos);
+        SetFov(fov);
+        SetRot(rot);
+        StartCoroutine("Frame");
+    }
 
-        private void SetPos(Vector3 pos)
-        {
-            tarPos = pos;
-            framePos = (pos - this.gameObject.transform.position) / (float)moveSpeed;
-            computeOperator += MovePos;
-        }
-        private void SetFov(float fov)
-        {
-            tarFoV = fov;
-            frameFoV = (fov - cameraMain.fieldOfView) / (float)moveSpeed;
-            computeOperator += MoveFoV;
-        }
-        private void SetRot(Vector3 rot)
-        {
-            tarRot = rot;
-            initialRot = gameObject.transform.rotation.eulerAngles;
-            TranslateRotation(ref initialRot);
+    int PosFrame;
+    private void SetPos(Vector3 pos)
+    {
+        tarPos = pos;
+        framePos = (pos - this.gameObject.transform.position) / moveSpeed;
+        PosFrame = 0;
+        computeOperator += MovePos;
+    }
+    int FovFrame;
+    private void SetFov(float fov)
+    {
+        tarFoV = fov;
+        frameFoV = (fov - cameraMain.fieldOfView) / moveSpeed;
+        FovFrame = 0;
+        computeOperator += MoveFoV;
+    }
+    int RotFrame;
+    private void SetRot(Vector3 rot)
+    {
+        tarRot = rot;
+        initialRot = gameObject.transform.rotation.eulerAngles;
+        TranslateRotation(ref initialRot);
 
-            frameRot = (rot - initialRot) / (float)moveSpeed;
-            hasRotEular = Vector3.zero;
-            RotX = rot.x - initialRot.x;
-            RotY = rot.y - initialRot.y;
-            computeOperator += MoveRot;
-        }
+        frameRot = (rot - initialRot) / moveSpeed;
+        hasRotEular = Vector3.zero;
+        RotFrame = 0;
+        computeOperator += MoveRot;
+    }
 
-        void Start()
-        {
-            if (cameraMain == null)
-                cameraMain = gameObject.GetComponent<Camera>();
-        }
+    void Awake()
+    {
+        if (cameraMain == null)
+            cameraMain = gameObject.GetComponent<Camera>();
+    }
 
-        void Update()
+    IEnumerator Frame()
+    {
+        while (true)
         {
             if (computeOperator != null)
-                computeOperator();
-        }
-
-        private void MovePos()
-        {
-            gameObject.transform.position += framePos;
-            if (Vector3.Distance(tarPos, gameObject.transform.position) <= 0.001f)
-            {
-                gameObject.transform.position = tarPos;
-                computeOperator -= MovePos;
-            }
-        }
-        private void MoveFoV()
-        {
-            cameraMain.fieldOfView += frameFoV;
-            if (cameraMain.fieldOfView <= tarFoV)
-            {
-                cameraMain.fieldOfView = tarFoV;
-                computeOperator -= MoveFoV;
-            }
-        }
-
-        private void MoveRot()
-        {
-            hasRotEular += frameRot;
-            gameObject.transform.rotation = Quaternion.Euler(initialRot + hasRotEular);
-            if (JudgeOutCome(hasRotEular.y, RotY) && JudgeOutCome(hasRotEular.x, RotX))
-            {
-                gameObject.transform.rotation = Quaternion.Euler(tarRot);
-                computeOperator -= MoveRot;
-            }
-        }
-
-        private bool JudgeOutCome(float x, float y)
-        {
-            if (y < 0)
-                return (x <= y) ? true : false;
+                computeOperator.Invoke();
             else
-                return (x >= y) ? true : false;
+                StopCoroutine("Frame");
+            yield return new WaitForSeconds(0.015f);
         }
-        private void TranslateRotation(ref Vector3 tarVec)
+    }
+
+    private void MovePos()
+    {
+        gameObject.transform.position += framePos;
+        PosFrame++;
+        if (!(PosFrame < moveSpeed))
         {
-            if (tarVec.x > 180)
-                tarVec.x = tarVec.x - 360f;
-            if (tarVec.y > 180)
-                tarVec.y = tarVec.y - 360f;
-            if (tarVec.z > 180)
-                tarVec.z = tarVec.z - 360f;
+            if (endOperate != null)
+            {
+                endOperate.Invoke();
+                endOperate = null;
+            }
+            gameObject.transform.position = tarPos;
+            computeOperator -= MovePos;
         }
+    }
+    private void MoveFoV()
+    {
+        cameraMain.fieldOfView += frameFoV;
+        FovFrame++;
+        if (!(FovFrame < moveSpeed))
+        {
+            if (endOperate != null)
+            {
+                endOperate.Invoke();
+                endOperate = null;
+            }
+            cameraMain.fieldOfView = tarFoV;
+            computeOperator -= MoveFoV;
+        }
+    }
+
+    private void MoveRot()
+    {
+        hasRotEular += frameRot;
+        RotFrame++;
+        gameObject.transform.rotation = Quaternion.Euler(initialRot + hasRotEular);
+        if (!(RotFrame < moveSpeed))
+        {
+            if (endOperate != null)
+            {
+                endOperate.Invoke();
+                endOperate = null;
+            }
+            gameObject.transform.rotation = Quaternion.Euler(tarRot);
+            computeOperator -= MoveRot;
+        }
+    }
+    private void TranslateRotation(ref Vector3 tarVec)
+    {
+        if (tarVec.x > 180)
+            tarVec.x = tarVec.x - 360f;
+        if (tarVec.y > 180)
+            tarVec.y = tarVec.y - 360f;
+        if (tarVec.z > 180)
+            tarVec.z = tarVec.z - 360f;
+    }
 }
