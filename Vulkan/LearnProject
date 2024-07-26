@@ -4,8 +4,15 @@
 #include <iostream>
 #include <stdexcept>
 #include <cstdlib>
+#include <optional>
 
 #include "validationLayers.h"
+#include "physicalDevice.h"
+
+struct QueueFamilyIndices
+{
+    std::optional<uint32_t> graphicsFamily;
+};
 
 class HelloTriangleApplication
 {
@@ -22,6 +29,11 @@ private:
     // the instance is the connection between your application and the vulkan library
     // specifying some details about your application to the driver
     VkInstance instance;
+    VkDebugUtilsMessengerEXT debugMessenger;
+    // The graphics card that we'll end up selecting will be stored in this
+    // this handle will be implicitly destroyed when the VkInstance is destroyed.
+    VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
+
     const uint32_t WIDTH = 800;
     const uint32_t HEIGHT = 600;
 private:
@@ -41,6 +53,8 @@ private:
     void initVulkan()
     {
         createInstance();
+        setupDebugMessenger();
+        pickPhysicalDevice();
     }
     void mainLoop()
     {
@@ -51,6 +65,9 @@ private:
     }
     void cleanup()
     {
+        if (enableValidationLayers)
+            DestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
+
         vkDestroyInstance(instance, nullptr);
 
         glfwDestroyWindow(window);
@@ -82,6 +99,8 @@ private:
         // not optional and tells the Vulkan driver which global extensions and vaildation layers we want to use.
         // global here means that they apply to the entire program and not a specific device.
         VkInstanceCreateInfo createInfo{};
+        VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
+
         createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
         createInfo.pApplicationInfo = &appInfo;
         createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size()); // 2
@@ -90,9 +109,14 @@ private:
         {
             createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
             createInfo.ppEnabledLayerNames = validationLayers.data();
+
+            populateDebugMessengerCreateInfo(debugCreateInfo);
+            createInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT*)&debugCreateInfo;
         } else
         {
             createInfo.enabledLayerCount = 0;
+
+            createInfo.pNext = nullptr;
         }
 
         if (vkCreateInstance(&createInfo, nullptr, &instance) != VK_SUCCESS)
@@ -100,11 +124,70 @@ private:
             throw std::runtime_error("failed to create instance");
         }
     }
+
+    void setupDebugMessenger()
+    {
+        if (!enableValidationLayers) return;
+        
+        VkDebugUtilsMessengerCreateInfoEXT createInfo;
+        populateDebugMessengerCreateInfo(createInfo);
+
+        if (CreateDebugUtilsMessengerEXT(instance, &createInfo, nullptr, &debugMessenger) != VK_SUCCESS)
+        {
+            throw std::runtime_error("failed to set up debug messenger!");
+        }
+    }
+
+#pragma region Physical devices
+    void pickPhysicalDevice()
+    {
+        uint32_t deviceCount = 0;
+        vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
+
+        if (deviceCount == 0) {
+            throw std::runtime_error("failed to find GPUs with Vulkan support!");
+        }
+
+        std::vector<VkPhysicalDevice> devices(deviceCount);
+        vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
+
+        for (const auto& device : devices)
+        {
+            if (isDeviceSuitable(device))
+            {
+                physicalDevice = device;
+                break;
+            }
+        }
+
+        if (physicalDevice == VK_NULL_HANDLE)
+            throw std::runtime_error("failed to find a suitable GPU!");
+    }
+
+    bool isDeviceSuitable(VkPhysicalDevice device)
+    {
+        return true;
+    }
+#pragma endregion
+
+#pragma region Queue
+    QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device)
+    {
+        QueueFamilyIndices indices;
+
+
+
+        return indices;
+    }
+#pragma endregion
+
 };
 
 int main()
 {
     HelloTriangleApplication app;
+
+    std::optional<int> x = std::nullopt;
 
     try
     {
