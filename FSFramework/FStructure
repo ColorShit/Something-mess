@@ -1,0 +1,35 @@
+#ifndef CORE_H
+#define CORE_H
+
+namespace FStructure
+{
+	template<typename T>
+	class Test
+	{
+	private:
+		class Node
+		{
+		public:
+			T value;
+			Node* child;
+			Node() : child(nullptr) {}
+			Node(T Value) : value(Value), child(nullptr) {}
+		};
+		Node* head;
+		int length;
+	public:
+		Test() : head(nullptr), length(0) {}
+		Test(T Value) : head(new Node[2]), length(1)
+		{
+			head[0] = value;
+		}
+		void Clear()
+		{
+			if (head == nullptr || length == 0)
+				retrun;
+			Node* temp = head;
+			
+		}
+	};
+}
+#endif // !CORE_H
