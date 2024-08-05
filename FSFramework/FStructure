@@ -22,10 +22,17 @@ namespace FStructure
 		}
 		void Clear()
 		{
-			if (head == nullptr || length == 0)
-				retrun;
-			Node* temp = head;
-			
+			for (int i = length; i > -1; i--)
+			{
+				if (head[i]->child != nullptr)
+					delete head[i]->child;
+				delete head[i];
+			}
+			head = nullptr;
+		}
+		~Test()
+		{
+			Clear();
 		}
 	};
 }
