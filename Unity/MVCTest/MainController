@@ -11,7 +11,7 @@ namespace FSLibrary.CoreModule
         public Transform[] nodes;
         public string firstName;
         public Transform specUILevel;
-
+        
         private void Awake()
         {
             if (instance == null)
@@ -58,5 +58,4 @@ namespace FSLibrary.CoreModule
             }
         }
     }
-
 }
