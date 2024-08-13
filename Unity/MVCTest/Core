@@ -1,24 +1,24 @@
 using System;
 using System.Collections.Generic;
-using UnityEngine;
-using System.Linq;
 using System.Reflection;
-using UnityEngine.UI;
+using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
+using System.Linq;
 
 namespace FSLibrary.CoreModule
 {
     public class Core
     {
-        private static Dictionary<Type, FSView> dicView = new Dictionary<Type, FSView>();
-        private static Dictionary<string, FSModel> dicModel = new Dictionary<string, FSModel>();
+        FSContainer container;
         internal static Transform[] nodes;
         private MVPCustomStack stack;
 
         public Core()
         {
             stack = new MVPCustomStack();
-            InstantiateModelAll();
+            container = new FSContainer();
+            container.InitView();
         }
 
         public void PushStack<T>() where T : FSView
@@ -26,71 +26,33 @@ namespace FSLibrary.CoreModule
             FSView tempView = InstantiateView(typeof(T).Name);
             stack.Push(tempView);
         }
+
         public void PushStack(string name)
         {
             FSView tempView = InstantiateView(name);
             stack.Push(tempView);
         }
+
         public void ReplaceStack<T>() where T : FSView
         {
             FSView tempView = InstantiateView(typeof(T).Name);
             stack.Replace(tempView);
         }
+
         private FSView InstantiateView(string typename)
         {
             FSView tempView;
             Type tempType = Type.GetType(typename);
-            dicView.TryGetValue(tempType, out tempView);
-            if (tempView == null)
-            {
-                tempView = Activator.CreateInstance(tempType) as FSView;
-                dicView.Add(tempType, tempView);
-            }
-            FSView.CheckInterfaceOnShow(tempType, tempView);
-            FSView.CheckInterfaceOnHide(tempType, tempView);
+            container.dicView.TryGetValue(typename, out tempView);
             return tempView;
         }
-        internal static FSModel ConnectModel(string typename)
-        {
-            FSModel model;
-            dicModel.TryGetValue(typename, out model);
-            return model;
-        }
-        private void InstantiateModelAll()
-        {
-            Type baseType = typeof(FSModel);
-            var types = Assembly.GetExecutingAssembly().GetTypes().
-                Where(t => t.IsClass && !t.IsAbstract).
-                Where(t => baseType.IsAssignableFrom(t));
-            foreach (var item in types)
-            {
-                Debug.Log(item.Name);
-                InstantiateModel(item.Name);
-            }
-        }
-        private void InstantiateModel(string name)
-        {
-            FSModel tempModel = Activator.CreateInstance(Type.GetType(name)) as FSModel;
-            dicModel.Add(name, tempModel);
-        }
 
-        public void PopStack()
-        {
-            stack.Pop();
-        }
+        public void PopStack() => stack.Pop();
 
         /// <summary>
         /// Controller will pop up parameter(s) until remain m parameter(s)
         /// </summary>
-        public void PopStack(int m)
-        {
-            int n = stack.Size() - m, i = 0;
-            while (i < n)
-            {
-                stack.Pop();
-                i++;
-            }
-        }
+        public void PopStack(int m) => stack.Pop(m);
 
         private class MVPCustomStack
         {
@@ -154,6 +116,19 @@ namespace FSLibrary.CoreModule
                 }
             }
 
+            public void Pop(int remainAmount)
+            {
+                if (length == 0 || remainAmount == length)
+                    return;
+                for (int i = length - 1; i > remainAmount - 1; i--)
+                {
+                    stack[i].Close();
+                    stack[i] = null;
+                }
+                stack[remainAmount - 1].Show();
+                length = remainAmount;
+            }
+
             public FSView Top()
             {
                 if (length != 0)
@@ -180,9 +155,94 @@ namespace FSLibrary.CoreModule
         }
     }
 
+    [AttributeUsage(AttributeTargets.Field, AllowMultiple = false)]
+    public class ModelInjectAttribute : Attribute { }
+
+    class FSContainer
+    {
+        public Dictionary<string, FSView> dicView;
+        public Dictionary<Type, FSModel> dicModel;
+
+        public FSContainer() 
+        {
+            dicView = new Dictionary<string, FSView>();
+            dicModel = new Dictionary<Type, FSModel>();
+        }
+
+        public void Print()
+        {
+            if (dicView.Count == 0)
+            {
+                Debug.Log("DicView is NULL!");
+                return;
+            }
+            foreach (var data in dicView)
+            {
+                Debug.Log($"Name: {data.Key}, Value: {data.Value}");
+            }
+        }
+
+        internal void InitView()
+        {
+            InitModel();
+            Type baseType = typeof(FSView);
+            var types = Assembly.GetExecutingAssembly().GetTypes().
+                Where(t => t.IsClass && !t.IsAbstract).
+                Where(t => baseType.IsAssignableFrom(t));
+            string typeName;
+            foreach (var type in types)
+            {
+                typeName = type.Name;
+                Type tempType = Type.GetType(typeName);
+                FSView tempView = Activator.CreateInstance(tempType) as FSView;
+                /// Connect Model
+                var fields = tempType.GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+                FSModel injectTempType;
+                foreach (var field in fields)
+                {
+                    if (field.GetCustomAttribute<ModelInjectAttribute>() != null)
+                    {
+                        dicModel.TryGetValue(field.FieldType, out injectTempType);
+                        field.SetValue(tempView, injectTempType);
+                    }
+                }
+                /// Connect interface
+                if (typeof(IViewOnShow).IsAssignableFrom(tempType))
+                {
+                    MethodInfo methodInfo = tempType.GetMethod("OnShow");
+                    tempView.ShowAction += () => { methodInfo.Invoke(tempView, new object[] { }); };
+                }
+                if (typeof(IViewOnHidden).IsAssignableFrom(tempType))
+                {
+                    MethodInfo methodInfo = tempType.GetMethod("OnHidden");
+                    tempView.HiddenAction += () => { methodInfo.Invoke(tempView, new object[] { }); };
+                }
+
+                dicView.Add(typeName, tempView);
+            }
+        }
+
+        private void InitModel()
+        {
+            Type baseType = typeof(FSModel);
+            var types = Assembly.GetExecutingAssembly().GetTypes().
+                Where(t => t.IsClass && !t.IsAbstract).
+                Where(t => baseType.IsAssignableFrom(t));
+            string typeName;
+            foreach (var type in types)
+            {
+                typeName = type.Name;
+                Type tempType = Type.GetType(typeName);
+                FSModel tempView = Activator.CreateInstance(tempType) as FSModel;
+                dicModel.Add(tempType, tempView);
+            }
+        }
+    }
+
     public abstract class FSView<T, F> : FSView where T : FSPanel where F : FSModel
     {
         protected T Panel;
+        [ModelInject]
         protected F Model;
         private string panelPath;
         private byte level;
@@ -197,7 +257,6 @@ namespace FSLibrary.CoreModule
             sceneNum = route.sceneNum;
             isSwitchScene = route.m_Switch;
             loadMode = route.loadMode;
-            Model = Core.ConnectModel(typeof(F).Name) as F;
         }
         public override void Enable()
         {
@@ -229,6 +288,7 @@ namespace FSLibrary.CoreModule
             int tempNum = MainController.instance.currentScene;
             if (tempNum == sceneNum)
             {
+                Debug.Log("We maybe switch Scene");
                 if (isSwitchScene)
                 {
                     if (loadMode)
@@ -245,6 +305,7 @@ namespace FSLibrary.CoreModule
             }
             else
             {
+                Debug.Log("We must switch Scene");
                 if (loadMode)
                 {
                     BeforeLoadScene();
@@ -266,25 +327,9 @@ namespace FSLibrary.CoreModule
         public abstract void Enable();
         public abstract void Close();
         public abstract void Show();
-        protected Action ShowAction;
+        internal protected Action ShowAction;
         public abstract void Hidden();
-        protected Action HiddenAction;
-        public static void CheckInterfaceOnShow(Type childView, FSView originalView)
-        {
-            if (typeof(IViewOnShow).IsAssignableFrom(childView))
-            {
-                MethodInfo methodInfo = childView.GetMethod("OnShow");
-                originalView.ShowAction += () => { methodInfo.Invoke(originalView, new object[] { }); };
-            }
-        }
-        public static void CheckInterfaceOnHide(Type childView, FSView originalView)
-        {
-            if (typeof(IViewOnHidden).IsAssignableFrom(childView))
-            {
-                MethodInfo methodInfo = childView.GetMethod("OnHidden");
-                originalView.HiddenAction += () => { methodInfo.Invoke(originalView, new object[] { }); };
-            }
-        }
+        internal protected Action HiddenAction;
     }
 
     /// <summary>
@@ -345,4 +390,3 @@ namespace FSLibrary.CoreModule
         Bottom = 2
     }
 }
-
