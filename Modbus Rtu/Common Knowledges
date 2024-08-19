@@ -1,4 +1,4 @@
-16-way register modbus rtu 485
+---------------16-way register modbus rtu 485----------------------
 Command sent :  
       1byte : register address(slave ID)
       1bytes : function Code (0x01 Read Coils,
@@ -26,4 +26,41 @@ Command Receive:
       1byte : data length
       2bytes : data
       2bytes : CRC Check Code
-                
+-----------------------------------------------------------------------------------
+-------------------------/////////////////////////--------------------------------
+private static UInt16 ModRTU_CRC(byte[] buf, int len)
+{
+    UInt16 crc = 0xFFFF;
+
+    for (int pos = 0; pos < len; pos++)
+    {
+        crc ^= (UInt16)buf[pos];          // XOR byte into least sig. byte of crc
+
+        for (int i = 8; i != 0; i--)
+        {    // Loop over each bit
+            if ((crc & 0x0001) != 0)
+            {      // If the LSB is set
+                crc >>= 1;                    // Shift right and XOR 0xA001
+                crc ^= 0xA001;
+            }
+            else                            // Else LSB is not set
+                crc >>= 1;                    // Just shift right
+        }
+    }
+    // Note, this number has low and high bytes swapped, so use it accordingly (or swap bytes)
+    return crc;
+}
+private static byte[] HexStringToByteArray(string hex)
+{
+    // Sample : 01 02 00 00 00 10 79 C6
+    int length = (hex.Length + 1) / 3;
+    if (length % 2 != 0)
+        Debug.LogError("Hex string is not conform to format!");
+    byte[] bytes = new byte[length];
+    for (int i = 0; i < length; i++)
+    {
+        bytes[i] = Convert.ToByte(hex.Substring(i * 3, 2), 16);
+    }
+    return bytes;
+}
+------------------------------------------------------------------------------------
