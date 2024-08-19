@@ -1,7 +1,7 @@
 16-way register modbus rtu 485
 Command sent :  
       1byte : register address(slave ID)
-      1byte : function Code (0x01 Read Coils,
+      1bytes : function Code (0x01 Read Coils,
                              0x02 Read Discrete Inputs,
                              0x03 Read Holding Registers, 
                              0x04 Read Input Registers,
@@ -13,9 +13,9 @@ Command sent :
                              0x08 Diagnostic,
                              0x11 Report Slave ID,
                              0x2B/0x0E Read Device Identification)
-      2byte : Starting Registers Address, normal Order
-      2byte : Number of Register, normal Order
-      2byte : CRC Check Code(
+      2bytes : Starting Registers Address, normal Order
+      2bytes : Number of Register, normal Order
+      2bytes : CRC Check Code(
                    UInt16 crc;
                    Low byte first{(byte)(crc & 0xFF)}, 
                    High byte last{(byte)((crc >> 8) & 0xFF)})
@@ -24,6 +24,6 @@ Command Receive:
       1byte : register address(slave ID)
       1byte : function Code
       1byte : data length
-      2byte : data
-      2byte : CRC Check Code
+      2bytes : data
+      2bytes : CRC Check Code
                 
