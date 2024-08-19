@@ -1,0 +1,10 @@
+16-way register modbus rtu 485
+Command sent :  
+      1byte : register address(slave ID)
+      1byte : function byte
+      2byte :  
+      2byte :  
+      2byte : CRC Check Code(
+                   Low byte first{(byte)(crc & 0xFF)}, 
+                   high byte last{(byte)((crc >> 8) & 0xFF)})
+                
