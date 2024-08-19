@@ -51,6 +51,7 @@ private static UInt16 ModRTU_CRC(byte[] buf, int len)
     // Note, this number has low and high bytes swapped, so use it accordingly (or swap bytes)
     return crc;
 }
+
 private static byte[] HexStringToByteArray(string hex)
 {
     // Sample : 01 02 00 00 00 10 79 C6
@@ -63,5 +64,20 @@ private static byte[] HexStringToByteArray(string hex)
         bytes[i] = Convert.ToByte(hex.Substring(i * 3, 2), 16);
     }
     return bytes;
+}
+
+public static void PrintAllPortNames()
+{
+    string[] portNames = SerialPort.GetPortNames();
+
+    if (portNames.Length == 0)
+        Debug.Log("There is not serial port which is available.");
+    else
+    {
+        foreach (string name in portNames)
+        {
+            Debug.Log("Available serial port: " + name);
+        }
+    }
 }
 ------------------------------------------------------------------------------------
