@@ -94,6 +94,12 @@ private:
 
     std::vector<VkFramebuffer> swapChainFramebuffers;
 
+    // Command pools manange the memory that is used to store the buffers and command buffers
+    // are allocated from them.
+    VkCommandPool commandPool;
+
+    VkCommandBuffer commandBuffer;
+
     const uint32_t WIDTH = 800;
     const uint32_t HEIGHT = 600;
 #pragma endregion
@@ -122,6 +128,8 @@ private:
         createRenderPass();
         createGraphicsPipeline();
         createFramebuffers();
+        createCommandPool();
+        createCommandBuffer();
     }
     void mainLoop()
     {
@@ -132,6 +140,8 @@ private:
     }
     void cleanup()
     {
+        vkDestroyCommandPool(device, commandPool, nullptr);
+
         for (auto framebuffer : swapChainFramebuffers)
         {
             vkDestroyFramebuffer(device, framebuffer, nullptr);
@@ -790,6 +800,24 @@ private:
                 &swapChainFramebuffers[i]) != VK_SUCCESS)
                 throw std::runtime_error("failed to create framebuffer!");
         }
+    }
+    void createCommandPool()
+    {
+        QueueFamilyIndices queueFamilyIndices = findQueueFamilies(physicalDevice);
+
+        VkCommandPoolCreateInfo poolInfo{};
+        poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+        poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+        poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
+
+        if (vkCreateCommandPool(device, &poolInfo, nullptr, &commandPool) != VK_SUCCESS)
+        {
+            throw std::runtime_error("failed to create command pool!");
+        }
+    }
+    void createCommandBuffer()
+    {
+
     }
 #pragma endregion
 };
