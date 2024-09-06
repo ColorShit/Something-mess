@@ -1,0 +1,203 @@
+using System.Runtime.InteropServices;
+
+namespace ModbusProject.MyModbus
+{
+    public class ScanIDCard : IDisposable
+    {
+        [DllImport("sdtapi_x64.dll")]
+        public static extern int SDT_OpenPort(int iPortID);
+        [DllImport("sdtapi_x64.dll")]
+        public static extern int SDT_ClosePort(int iPortID);
+        [DllImport("sdtapi_x64.dll")]
+        public static extern int SDT_StartFindIDCard(int iPort, byte[] pucManaInfo, int iIfOpen);
+        [DllImport("sdtapi_x64.dll")]
+        public static extern int SDT_SelectIDCard(int iPort, byte[] pucManaMsg, int iIfOpen);
+        [DllImport("sdtapi_x64.dll")]
+        public static extern int SDT_ReadBaseMsg(int iPort, byte[] pucCHMsg, ref uint puiCHMsgLen, byte[] pucPHMsg, ref uint puiPHMsgLen, int iIfOpen);
+        int isOpen = 0;
+        int iPort = 1001;
+        int iIfOpen = 0;
+        int iRet = 0;
+        byte[] pucManaInfo;
+        byte[] pucManaMsg;
+        byte[] pucCHMsg;
+        byte[] pucPHMsg;
+        uint puiCHMsgLen;
+        uint puiPHMsgLen;
+        Thread scanIDCardThread;
+        public ScanIDCard()
+        {
+            System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+            pucManaInfo = new byte[4];
+            pucManaMsg = new byte[8];
+            pucCHMsg = new byte[256];
+            pucPHMsg = new byte[1024];
+            scanIDCardThread = new Thread(ScanCardEntity);
+            isOpen = SDT_OpenPort(iPort);
+            if (isOpen == 0x90)
+            {
+                Console.WriteLine("Open Port has Succeed!");
+            }
+            else
+            {
+                Console.WriteLine("Open port has failed!");
+            }
+        }
+
+        bool _continue;
+        public void StartScanCard()
+        {
+            if (_continue || isOpen != 0x90)
+            {
+                Console.WriteLine("Start ScanCard has failed!");
+            }
+            _continue = true;
+        }
+        public void StopScanCard()
+        {
+            if (!_continue)
+            {
+                Console.WriteLine("Scan Card had disconnected!");
+                return;
+            }
+            _continue = false;
+            scanIDCardThread.Join(5000);
+        }
+        public void ScanCard()
+        {
+            if (isOpen == 0x90)
+            {
+                iRet = SDT_StartFindIDCard(iPort, pucManaInfo, iIfOpen);
+                if (iRet == 0x9f)
+                {
+                    Console.WriteLine("Find Card has Succeed!");
+                    iRet = SDT_SelectIDCard(iPort, pucManaInfo, iIfOpen);
+                    if (iRet == 0x90)
+                    {
+                        Console.WriteLine("Select Card has Succeed!");
+                        iRet = SDT_ReadBaseMsg(iPort, pucCHMsg, ref puiCHMsgLen, pucPHMsg, ref puiPHMsgLen, iIfOpen);
+                        if (iRet == 0x90)
+                        {
+                            Console.WriteLine("Read Data has Succeed!");
+                            Console.WriteLine("Name: " + GetName(pucCHMsg));
+                            Console.WriteLine("Gendor: " + GetGendor(pucCHMsg[30]));
+                            Console.WriteLine("ID Number: " + GetIDNumber(pucCHMsg));
+                        }
+                        else
+                        {
+                            Console.WriteLine($"Read Data has Failed: {iRet}");
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine("Select Card has Failed!");
+                    }
+                }
+                else
+                {
+                    Console.WriteLine($"Find Card has failed!: {iRet}");
+                }
+            }
+        }
+        public void ScanCardEntity()
+        {
+            //while (_continue)
+            //{
+            //    if (isOpen == 0x90)
+            //    {
+            //        iRet = SDT_StartFindIDCard(iPort, ref pucManaInfo, iIfOpen);
+            //        if (iRet == 0x90)
+            //        {
+            //            Console.WriteLine("Select Card has Succeed!");
+            //            iRet = SDT_ReadBaseMsg(iPort, ref pucCHMsg, ref puiCHMsgLen, ref pucPHMsg, ref puiPHMsgLen, iIfOpen);
+            //            if (iRet == 0x90)
+            //            {
+            //                Console.WriteLine("Read Data has Succeed!");
+            //            }
+            //            else
+            //            {
+            //                Console.WriteLine($"Read Data has Failed!: {iRet}");
+            //            }
+            //        }
+            //        else
+            //        {
+            //            Console.WriteLine($"Select Card has failed!: {iRet}");
+            //        }
+            //    }
+            //}
+        }
+
+        public void Dispose()
+        {
+            if (isOpen == 0x90)
+            {
+                SDT_ClosePort(iPort);
+                Console.WriteLine("Close port!");
+            }
+        }
+
+        #region Get Message
+        /// <summary>
+        /// Just transport the parameter "pucCHMsg" of function "SDT_ReadBaseMsg" 
+        /// </summary>
+        private static string GetName(byte[] buffer)
+        {
+            string name = "";
+
+            for (int i = 0; i < 30; ++i)
+            {
+                if (buffer[i] != 32)
+                {
+                    ushort unicodeValue = (ushort)((buffer[i + 1]) << 8 | buffer[i]);
+                    char unicodeChar = (char)unicodeValue;
+                    name += unicodeChar.ToString();
+                    i++;
+                }
+                else break;
+            }
+            return name;
+        }
+        /// <summary>
+        /// Just transport the parameter "pucCHMsg[30]" of function "SDT_ReadBaseMsg"
+        /// </summary>
+        private static string GetGendor(byte value)
+        {
+            switch (value)
+            {
+                case 49:
+                    return "男";
+                case 50:
+                    return "女";
+                default:
+                    return "Not Check the Current Value!";
+            }
+        }
+        /// <summary>
+        /// Just transport the parameter "pucCHMsg" of function "SDT_ReadBaseMsg"
+        /// </summary>
+        private static string GetIDNumber(byte[] buffer)
+        {
+            string result = "";
+            int temp;
+            for (int i = 0; i < 17; i++)
+            {
+                temp = 0b00001111 & buffer[122 + i * 2];
+                result += Convert.ToString(temp, 10) + " ";
+            }
+            if (buffer[156] == 10)
+                result += "X";
+            else
+                result += 0x0F & buffer[156];
+            return result;
+        }
+        #endregion
+        ~ScanIDCard() 
+        {
+            if (isOpen == 0x90)
+            {
+                SDT_ClosePort(iPort);
+                Console.WriteLine("Close port!");
+            }
+        }
+    }
+}
