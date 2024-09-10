@@ -1,0 +1,73 @@
+using System.Collections.Generic;
+using UnityEngine;
+using FSLibrary;
+
+public class FSMultiToggle : MonoBehaviour
+{
+    public FSToggleBtn[] btns;
+    public string[] answerContent;
+    List<int> currentContainer;
+    public EasyBtn closeBtn;
+    private void Awake()
+    {
+        currentContainer = new List<int>();
+        for (int i = 0; i < btns.Length; i++)
+        {
+            int n = i;
+            btns[i].onClick.AddListener(() => SelectCheck(n));
+        }
+    }
+
+    public void Init(int[] indexs = null)
+    {
+        if (indexs == null)
+        {
+
+        }
+        else
+        {
+            for (int i = 0; i < indexs.Length; i++)
+            {
+                btns[indexs[i]].Select();
+                currentContainer.Add(indexs[i]);
+            }
+        }
+    }
+
+    private void SelectCheck(int n)
+    {
+        if (currentContainer.Contains(n))
+        {
+            btns[n].UnSelect();
+            currentContainer.Remove(n);
+        }
+        else
+        {
+            currentContainer.Add(n);
+        }
+    }
+
+    public int[] Close()
+    {
+        if (currentContainer == null || currentContainer.Count == 0)
+            return null;
+        else
+        {
+            int[] temp = new int[currentContainer.Count];
+            int i = 0;
+            foreach (int item in currentContainer)
+            { 
+                temp[i] = item;
+                btns[item].UnSelect();
+                i++;
+            }
+            currentContainer.Clear();
+            return temp;
+        }
+    }
+
+    private void OnDisable()
+    {
+        closeBtn.onclick.RemoveAllListener();
+    }
+}
