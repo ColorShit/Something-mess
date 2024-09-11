@@ -2,6 +2,9 @@ using System.Collections.Generic;
 using UnityEngine;
 using FSLibrary;
 
+// Many "class" to one "class"(is this), Meanings:
+// When make this class to enable, we should call "Init()" function to init once,
+// When make this class to disable, we should call "Revert()" function to revert once
 public class FSMultiToggle : MonoBehaviour
 {
     public FSToggleBtn[] btns;
@@ -19,7 +22,7 @@ public class FSMultiToggle : MonoBehaviour
     }
 
     /// After Make this gameObject to be true, 
-    /// take an array to "Init()" this .cs file(or called "GameObject")
+    /// take an array to "Init()" class(or called "GameObject")
     public void Init(int[] indexs = null)
     {
         if (indexs == null)
@@ -37,8 +40,8 @@ public class FSMultiToggle : MonoBehaviour
     }
 
     // Before make this "gameObject" to be disable, 
-    // call "Close" to accept the answer and reset this .cs file(or called "GameObject")
-    public int[] Close()
+    // call "Revert()" to accept the answer and revert this class(or called "GameObject")
+    public int[] Revert()
     {
         if (currentContainer == null || currentContainer.Count == 0)
             return null;
