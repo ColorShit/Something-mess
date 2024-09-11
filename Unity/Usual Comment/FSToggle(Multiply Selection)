@@ -18,6 +18,8 @@ public class FSMultiToggle : MonoBehaviour
         }
     }
 
+    /// After Make this gameObject to be true, 
+    /// take an array to "Init()" this .cs file(or called "GameObject")
     public void Init(int[] indexs = null)
     {
         if (indexs == null)
@@ -34,19 +36,8 @@ public class FSMultiToggle : MonoBehaviour
         }
     }
 
-    private void SelectCheck(int n)
-    {
-        if (currentContainer.Contains(n))
-        {
-            btns[n].UnSelect();
-            currentContainer.Remove(n);
-        }
-        else
-        {
-            currentContainer.Add(n);
-        }
-    }
-
+    // Before make this "gameObject" to be disable, 
+    // call "Close" to accept the answer and reset this .cs file(or called "GameObject")
     public int[] Close()
     {
         if (currentContainer == null || currentContainer.Count == 0)
@@ -63,6 +54,19 @@ public class FSMultiToggle : MonoBehaviour
             }
             currentContainer.Clear();
             return temp;
+        }
+    }
+
+    private void SelectCheck(int n)
+    {
+        if (currentContainer.Contains(n))
+        {
+            btns[n].UnSelect();
+            currentContainer.Remove(n);
+        }
+        else
+        {
+            currentContainer.Add(n);
         }
     }
 
