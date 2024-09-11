@@ -8,9 +8,9 @@ using FSLibrary;
 public class FSMultiToggle : MonoBehaviour
 {
     public FSToggleBtn[] btns;
-    public string[] answerContent;
     List<int> currentContainer;
     public EasyBtn closeBtn;
+
     private void Awake()
     {
         currentContainer = new List<int>();
