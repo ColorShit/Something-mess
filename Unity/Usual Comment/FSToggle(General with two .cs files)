@@ -78,3 +78,62 @@ public class FSMultiToggle : MonoBehaviour
         closeBtn.onclick.RemoveAllListener();
     }
 }
+
+
+using UnityEngine;
+using FSLibrary;
+
+// Many "class" to one "class"(is this), Meanings:
+// When make this class to enable, we should call "Init()" function to init once,
+// When make this class to disable, we should call "Revert()" function to revert once
+public class FSingleToggle : MonoBehaviour
+{
+    public FSToggleBtn[] btns;
+    public EasyBtn closeBtn;
+    public int answer;
+
+    private void Awake()
+    {
+        answer = -1;
+        for (int i = 0; i < btns.Length; i++)
+        {
+            int n = i;
+            btns[i].onClick.AddListener(() => SelectCheck(n));
+        }
+    }
+
+    public void Init(int index = -1)
+    {
+        if (index == -1)
+        { }
+        else
+        {
+            btns[index].Select();
+            answer = index;
+        }
+    }
+
+    public int Revert()
+    {
+        if (answer == -1)
+            return -1;
+        else
+        {
+            btns[answer].UnSelect();
+            return answer;
+        }
+    }
+
+    private void SelectCheck(int n)
+    {
+        if (answer != -1)
+            btns[answer].UnSelect();
+        answer = n;
+    }
+
+    private void OnDisable()
+    {
+        closeBtn.onclick.RemoveAllListener();
+    }
+}
+
