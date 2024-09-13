@@ -1,0 +1,21 @@
+IEnumerator UploadWebrequest()
+{
+    string json = "{\"name\":\"wangdefa\", \"idCard\":\"1513087546310000\", \"paperCode\":\"space-20240101001111\"}";
+    byte[] jsonBytes = Encoding.UTF8.GetBytes(json);
+    string url = "http://111.111.1.111:1111/....../...";
+    UnityWebRequest www = new UnityWebRequest(url, "POST");
+    www.uploadHandler = new UploadHandlerRaw(jsonBytes);
+    www.downloadHandler = new DownloadHandlerBuffer();
+    www.SetRequestHeader("Content-Type", "application/json");
+    yield return www.SendWebRequest();
+
+    if (www.result == UnityWebRequest.Result.Success)
+    {
+        Debug.Log("Upload complete!");
+        Debug.Log("Response: " + www.downloadHandler.text);
+    }
+    else
+    {
+        Debug.LogError("Error: " + www.error);
+    }
+}
