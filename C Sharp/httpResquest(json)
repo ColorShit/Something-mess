@@ -1,0 +1,51 @@
+using System.Text;
+
+namespace ModbusProject.MyModbus
+{
+    public class ConnectSocket: IDisposable
+    {
+        string url = "http://111.111.1.111:1111/....../...";
+        HttpClient client;
+
+        public ConnectSocket()
+        {
+            client = new HttpClient();
+        }
+
+        public void Dispose()
+        {
+            client.Dispose();
+        }
+
+        public async void SendMessage()
+        {
+            try
+            {
+                //var formData = new Dictionary<string, string>
+                //{
+                //    { "name", "wangdefa" },
+                //    { "idCard", "120321199909304237" },
+                //    { "paperCode", "space-20240909090000" }
+                //};
+
+                //HttpContent content = new FormUrlEncodedContent(formData);
+                //HttpResponseMessage reponse = await client.PostAsync(url, content);
+
+                string jsonData = "{\"name\":\"wangdefa\", \"idCard\":\"1503087546315478\", \"paperCode\":\"space-20240101000000\"}";
+                HttpContent cont = new StringContent(jsonData, Encoding.UTF8, "application/json");
+
+                HttpResponseMessage responseMessage = await client.PostAsync(url, cont);
+                responseMessage.EnsureSuccessStatusCode();
+
+                string responseBody = await responseMessage.Content.ReadAsStringAsync();
+                Console.WriteLine("Response Content: ");
+                Console.WriteLine(responseBody);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Response failed: {e.Message}");
+                throw;
+            }
+        }
+    }
+}
