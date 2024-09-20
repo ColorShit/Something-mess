@@ -1,0 +1,15 @@
+public class Sample : MonoBehaviour
+{
+     public RectTransform refreshNode;
+
+     public void Refresh()
+     {
+          StartCoroutine("ScrollToBottomNextFrame");
+     }
+
+     IEnumerator ScrollToBottomNextFrame()
+     {
+          yield return null;
+          LayoutRebuilder.ForceRebuildLayoutImmediate(node);
+     }
+}
