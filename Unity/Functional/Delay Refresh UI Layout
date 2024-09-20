@@ -1,0 +1,23 @@
+public class Sample : MonoBehaviour
+{
+     public RectTransform refreshNode;
+     public ScrollRect scrollerView;
+     public RectTransform node;
+
+     public void Refresh()
+     {
+          /...
+              Change UI Layout, such as 
+                  "scrollerView = GameObject.Instantiate(gObjPrefab, node);"
+                  // gObjPrefab is a "ScrollRect" prefab.
+          .../
+          StartCoroutine("ScrollToBottomNextFrame");
+     }
+
+     IEnumerator ScrollToBottomNextFrame()
+     {
+          yield return null;
+          LayoutRebuilder.ForceRebuildLayoutImmediate(node);
+          scrollerView.verticalNormalizedPosition = 0.000f;
+     }
+}
