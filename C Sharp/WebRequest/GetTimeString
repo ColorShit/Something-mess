@@ -2,3 +2,9 @@
 
 // string format000000000000 = DateTime.Now.ToString("yyyyMMddHHmmss");
 // yyyy MM dd HH mm ss (use random special characters to decorate them, but not letter)
+
+// Get Time Span
+// TimeSpan duration = DateTime.Now - startTime;
+//startTime : any time with DateTime format before DateTime.Now
+// string formattedDuration = 
+      $"{duration.Days:D2}{duration.Hours:D2}{duration.Minutes:D2}{duration.Seconds:D2}";
