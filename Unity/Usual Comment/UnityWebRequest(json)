@@ -1,5 +1,22 @@
+[Serializable]
+public class ResponseData
+{
+     public int status;
+     public string msg;
+     public Data data;
+}
+[Serializable]
+public class Data
+{
+     public float data1;
+     public float data2;
+}
+
 IEnumerator UploadWebrequest()
 {
+    //string json = string.Format(
+    //    "{{\"name\":\"{0}\", \"idCard\":\"{1}\", \"paperType\":\"1\", \"paperCode\":\"{2}\", \"onlineScore\":\"0\" }}",
+    //    "ssss", "121212122", "sadawdasd"));
     string json = "{\"name\":\"wangdefa\", \"idCard\":\"1513087546310000\", \"paperCode\":\"space-20240101001111\"}";
     byte[] jsonBytes = Encoding.UTF8.GetBytes(json);
     string url = "http://111.111.1.111:1111/....../...";
@@ -13,6 +30,10 @@ IEnumerator UploadWebrequest()
     {
         Debug.Log("Upload complete!");
         Debug.Log("Response: " + www.downloadHandler.text);
+        ResponseData responseData = JsonUtility.FromJson<ResponseData>(www.downloadHandler.text);
+        Debug.Log("status: " + responseData.status);
+        Debug.Log("msg: " + responseData.msg);
+        Debug.Log("score: " + responseData.data.data1);
     }
     else
     {
