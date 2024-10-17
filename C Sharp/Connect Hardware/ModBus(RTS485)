@@ -101,6 +101,8 @@ namespace ModbusProject.MyModbus
                         }
                         number += bytes;
 
+                        Console.WriteLine("number: " + number);
+                        Console.WriteLine("readBitAmount: " + readBitAmount);
                         if (number == readBitAmount)
                         {
                             /// Get the whole message
@@ -109,6 +111,25 @@ namespace ModbusProject.MyModbus
                             {
                                 str += data[i].ToString() + " ";
                             }
+                            int[] tempArray = null;
+                            if (readBitAmount == 7)
+
+                                tempArray = AnalysisOpeningTriggers(data[readBitAmount - 4], data[readBitAmount - 3]);
+                            else if (readBitAmount == 6)
+                                tempArray = AnalysisOpeningTriggers(data[readBitAmount - 3]);
+                            if (tempArray == null)
+                            {
+                                Console.WriteLine("Opening Trigger's amount is 0!");
+                            }
+                            else
+                            {
+                                string tempStr = "";
+                                for (int j = 0; j < tempArray.Length; j++)
+                                {
+                                    tempStr += tempArray[j].ToString() + " ";
+                                }
+                                Console.WriteLine("Triggers index: " + tempStr);
+                            }
                             Console.WriteLine("Receive Data: " + str);
                             ///
                             number = 0;
@@ -116,6 +137,7 @@ namespace ModbusProject.MyModbus
                     }
                     catch (Exception)
                     {
+                        throw;
                     }
                 }
                 //Thread.Sleep(500);
@@ -133,6 +155,7 @@ namespace ModbusProject.MyModbus
             if (!_continue) return;
             _continue = false;
             readDataThread.Join(5000);
+            Console.WriteLine($"{m_port.PortName} Read Data has over");
         }
 
         public void SendMessage(string str)
@@ -165,6 +188,60 @@ namespace ModbusProject.MyModbus
         {
             StopReadData();
             Disconnect();
+        }
+
+        // Amount of Register which will read is more than 8.
+        private static int[] AnalysisOpeningTriggers(byte low, byte high)
+        {
+            if (low == 0 && high == 0)
+                return null;
+            List<int> triggers = new List<int>();
+
+            int amount = (high << 8) | low;
+            int i = 1, power = 0;
+            while (power < 16)
+            {
+                int tempA = i;
+                i *= 2;
+                if (amount % i >= tempA)
+                    triggers.Add(power);
+                power++;
+            }
+            Console.WriteLine("Triggers's Count: " + triggers.Count);
+
+            int[] result = new int[triggers.Count];
+            int temp = 0;
+            foreach (int trigger in triggers) 
+            {
+                result[temp] = trigger;
+                temp++;
+            }
+            return result;
+        }
+        // Amount of Register which will read is less or equal than 8.
+        private static int[] AnalysisOpeningTriggers(byte data)
+        {
+            if (data == 0) return null;
+            List<int> triggers = new List<int>();
+
+            int i = 1, power = 0;
+            while (power < 8)
+            {
+                int tempA = i;
+                i *= 2;
+                if (data % i >= tempA)
+                    triggers.Add(power);
+                power++;
+            }
+
+            int[] result = new int[triggers.Count];
+            int temp = 0;
+            foreach (int trigger in triggers)
+            {
+                result[temp] = trigger;
+                temp++;
+            }
+            return result;
         }
 
         private static byte[] HexStringToByteArray(string hex)
