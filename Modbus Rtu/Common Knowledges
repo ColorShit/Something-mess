@@ -24,7 +24,13 @@ Command Receive:
       1byte : register address(slave ID)
       1byte : function Code
       1byte : data length
-      2bytes : data
+              (if only read 8 triggers, data length will be 1(byte), because index 0 trigger is 1, 
+               index 1 trigger is 2, index 2 trigger is 4.....index 7 trigger is 128, the sum of 
+               index 0-7 is 255, equal a 8bits container, so we need 1 byte, the data length is 1 byte)
+              (if read 16 triggers, data length will be 2(bytes), index 0 trigger is 1, index 1 trigger
+               is 2......index 15 trigger is 32768, the sum of index 0-15 is 65535, so we need 16bits
+               container, that is 2 bytes)
+      2bytes / 1byte / 3bytes : data
       2bytes : CRC Check Code
 -----------------------------------------------------------------------------------
 -------------------------/////////////////////////--------------------------------
