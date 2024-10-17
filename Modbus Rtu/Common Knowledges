@@ -14,7 +14,7 @@ Command sent :
                              0x11 Report Slave ID,
                              0x2B/0x0E Read Device Identification)
       2bytes : Starting Registers Address, normal Order
-      2bytes : Number of Register which will read, normal Order(1:01, 2: 02 ... 10: 0A, 11: 0B ... 16: 10)
+      2bytes : Amount of Register which will read, normal Order(1:01, 2: 02 ... 10: 0A, 11: 0B ... 16: 10)
       2bytes : CRC Check Code(
                    UInt16 crc;
                    Low byte first{(byte)(crc & 0xFF)}, 
