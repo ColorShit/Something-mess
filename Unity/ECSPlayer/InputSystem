@@ -1,0 +1,21 @@
+using UnityEngine;
+using Unity.Entities;
+using Unity.Mathematics;
+
+public partial struct InputSystem : ISystem
+{
+    public void OnUpdate(ref SystemState state)
+    {
+        foreach (var (p_state, move) in 
+            SystemAPI.Query<RefRO<PlayerState>, RefRW<PlayerMovement>>())
+        {
+            if (!p_state.ValueRO.IsActive)
+                continue;
+            move.ValueRW.MoveVector = new float3 {
+                x = (Input.GetKey(KeyCode.D) ? 1 : 0) - (Input.GetKey(KeyCode.A) ? 1 : 0),
+                y = 0,
+                z = (Input.GetKey(KeyCode.W) ? 1 : 0) - (Input.GetKey(KeyCode.S) ? 1 : 0)
+            };
+        }
+    }
+}
