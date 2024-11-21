@@ -1,0 +1,39 @@
+using Unity.Entities;
+using Unity.Mathematics;
+using Unity.Physics;
+using UnityEngine;
+
+public class PlayerAuthoring : MonoBehaviour
+{
+    public bool initState;
+    public float moveSpeed;
+    public GameObject bulletPrefab;
+}
+
+public class PlayerBaker : Baker<PlayerAuthoring>
+{
+    public override void Bake(PlayerAuthoring authoring)
+    {
+        var entity = GetEntity(TransformUsageFlags.Dynamic);
+        AddComponent(entity, new PlayerMovement
+        {
+            MoveSpeed = authoring.moveSpeed,
+            MoveVector = float3.zero
+        });
+        AddComponent(entity, new PlayerState
+        {
+            IsActive = authoring.initState,
+        });
+    }
+}
+
+public struct PlayerMovement : IComponentData
+{
+    public float MoveSpeed;
+    public float3 MoveVector;
+}
+
+public struct PlayerState : IComponentData
+{
+    public bool IsActive;
+}
