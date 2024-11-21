@@ -1,0 +1,107 @@
+using Unity.Burst;
+using Unity.Entities;
+using Unity.Mathematics;
+using Unity.Physics;
+using Unity.Transforms;
+using Unity.Collections;
+using Collider = Unity.Physics.Collider;
+
+public partial struct MoveSystem : ISystem
+{
+    public void OnUpdate(ref SystemState state)
+    {
+        foreach (var (localTransform, veloc, movement, pstate) in 
+            SystemAPI.Query<RefRW<LocalTransform>, RefRW<PhysicsVelocity>, RefRO<PlayerMovement>, RefRO<PlayerState>>())
+        {
+            if (pstate.ValueRO.IsActive)
+            {
+                float3 tempPos = localTransform.ValueRW.Position + movement.ValueRO.MoveVector * movement.ValueRO.MoveSpeed * SystemAPI.Time.DeltaTime;
+                uint belongs = 0;
+                Entity tempEntity = CapsuleCast(localTransform.ValueRO.Position, tempPos);
+                if (tempEntity == Entity.Null)
+                {
+                    localTransform.ValueRW.Position = tempPos;
+                }
+                else
+                {
+                    var physicsColliderLookup = SystemAPI.GetComponentLookup<PhysicsCollider>(isReadOnly: true);
+                    var physicsCollider = physicsColliderLookup[tempEntity];
+                    belongs = physicsCollider.Value.Value.GetCollisionFilter().BelongsTo;
+                    switch (belongs)
+                    {
+                        case 2:
+
+                            break;
+                        case 8:
+                            localTransform.ValueRW.Position = tempPos;
+                            veloc.ValueRW.Linear = float3.zero;
+                            break;
+                        default:
+                            break;
+                    }
+                    UnityEngine.Debug.Log(belongs);
+                }
+            }
+        }
+        //var job = new UpdateMoveJob { deltaTime = SystemAPI.Time.DeltaTime };
+        //job.Schedule();
+    }
+
+    //[BurstCompile]
+    //public partial struct UpdateMoveJob : IJobEntity
+    //{
+    //    public float deltaTime;
+    //    public void Execute(ref LocalTransform localTransform, in PlayerMovement movement, in PlayerState state)
+    //    {
+    //        if (state.IsActive)
+    //        {
+    //            localTransform.Position += movement.MoveVector * movement.MoveSpeed * deltaTime;
+    //        }
+                
+    //    }
+    //}
+
+    unsafe Entity CapsuleCast(float3 pointA, float3 pointB)
+    {
+        EntityQueryBuilder builder = new EntityQueryBuilder(Allocator.Temp).WithAll<PhysicsWorldSingleton>();
+
+        EntityQuery singletonQuery = World.DefaultGameObjectInjectionWorld.EntityManager.CreateEntityQuery(builder);
+        var collisionWorld = singletonQuery.GetSingleton<PhysicsWorldSingleton>().CollisionWorld;
+        singletonQuery.Dispose();
+
+        var filter = new CollisionFilter()
+        {
+            BelongsTo = 1 << 0,
+            CollidesWith = 1 << 1 | 1 << 3,
+            GroupIndex = 0
+        };
+
+        CapsuleGeometry capsuleGeometry = new CapsuleGeometry
+        {
+            Vertex0 = new float3(0, 0.5f, 0),
+            Vertex1 = new float3(0, -0.5f, 0),
+            Radius = 0.5f
+        };
+
+        BlobAssetReference<Collider> capsuleCollider = CapsuleCollider.Create(capsuleGeometry, filter);
+
+        ColliderCastInput input = new ColliderCastInput()
+        {
+            Collider = (Collider*)capsuleCollider.GetUnsafePtr(),
+            Orientation = quaternion.identity,
+            Start = pointA, 
+            End = pointB
+        };
+
+        ColliderCastHit hit = new ColliderCastHit();
+        bool haveHit = collisionWorld.CastCollider(input, out hit);
+        if (haveHit)
+        {
+            capsuleCollider.Dispose();
+            return hit.Entity;
+        }
+
+        capsuleCollider.Dispose();
+        return Entity.Null;
+    }
+}
