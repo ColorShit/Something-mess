@@ -44,3 +44,52 @@ class Database
      }
      public DataAttribute[] data;
 }
+
+#region Load Json
+HardwareJsonDate jsonDate;
+public class HardwareJsonDate
+{
+    [Serializable]
+    public class DateAttribute
+    {
+        public string serialPort;
+        public int baudRate;
+        public string slaveID;
+    }
+    public DateAttribute dateAttribute;
+    string jsonFilePath;
+
+    public HardwareJsonDate()
+    {
+        jsonFilePath = Path.Combine(Application.streamingAssetsPath, "HardWareParam.json");
+        if (File.Exists(jsonFilePath))
+        {
+            string jsonContent = File.ReadAllText(jsonFilePath);
+            dateAttribute = JsonUtility.FromJson<DateAttribute>(jsonContent);
+            Debug.Log("serialPort: " + dateAttribute.serialPort);
+            Debug.Log("baudRate: " + dateAttribute.baudRate);
+            Debug.Log("slaveID: " + dateAttribute.slaveID);
+        }
+        else
+        {
+            Debug.Log("We don't find the Path");
+        }
+    }
+
+    public void PrintJsonDate()
+    {
+        Debug.Log("serialPort: " + dateAttribute.serialPort);
+        Debug.Log("baudRate: " + dateAttribute.baudRate);
+        Debug.Log("slaveID: " + dateAttribute.slaveID);
+    }
+
+    public void ModifyDate(string sp, int baudrate, string slaveid)
+    {
+        dateAttribute.serialPort = sp;
+        dateAttribute.baudRate = baudrate;
+        dateAttribute.slaveID = slaveid;
+        string updatedJsonContent = JsonUtility.ToJson(dateAttribute);
+        File.WriteAllText(jsonFilePath, updatedJsonContent);
+        Debug.Log("Updated Succeed!");
+    }
+}
