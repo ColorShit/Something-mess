@@ -1,0 +1,76 @@
+[Serializable]
+public class UnitData
+{
+    public string unitName;
+    public Vector3 position;
+    public Quaternion rotation;
+    public Vector3 scale;
+    public UnitType unitType;
+    public int[] pointIndex;
+    public bool[] rORs;
+    public string[] lineNames;
+}
+
+[Serializable]
+public class LineData
+{
+    public string lineName;
+    public Vector3[] pointPositions;
+    public bool[] childLineVector;
+}
+
+[Serializable]
+public class SceneData
+{
+    public UnitData[] unitDatas;
+    public LineData[] lineDatas;
+}
+
+void Save()
+{
+    FileDialogWin32.OpenFileName openFileName = new FileDialogWin32.OpenFileName();
+    openFileName.structSize = Marshal.SizeOf(openFileName);
+
+    openFileName.filter = "File(*.ioaw)\0*.ioaw\0\0";
+    openFileName.file = new string(new char[256]);
+    openFileName.maxFile = openFileName.file.Length;
+    openFileName.fileTitle = new string(new char[64]);
+    openFileName.maxFileTitle = openFileName.fileTitle.Length;
+    openFileName.initialDir = UnityEngine.Application.streamingAssetsPath.Replace('/', '\\');// Default Path
+    openFileName.title = "Save File";
+    openFileName.flags = 0x00080000 | 0x00001000 | 0x00000800 | 0x00000008;
+    if (FileDialogWin32.GetSaveFileName(openFileName))
+    {
+        if (openFileName.file.Contains(".ioaw"))
+        {
+            SaveEntity(openFileName.file);
+        }
+        else
+        {
+            SaveEntity(openFileName.file + ".ioaw");
+        }
+    }
+    else
+    {
+        Debug.LogWarning("User Cancel the Operate that build new file!");
+    }
+}
+
+void SaveEntity(string FilePath)
+{
+    int i = 10;
+
+    UnitData[] UnitDatas = new UnitData[i];
+    LineData[] LineDatas = new LineData[i];
+
+    for (int j = 0; j < i; j++)
+    {
+        UnitDatas[j] = new UnitData{};
+        LineDatas[j] = new LineData{};
+    }
+    
+    SceneData sceneData = new SceneData { unitDatas, lineDatas };
+    
+    string json = JsonUtility.Tojson(sceneData, true);
+    File.WriteAllText(FilePath, json);
+}
