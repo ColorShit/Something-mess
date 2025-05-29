@@ -1,0 +1,88 @@
+public static class ModernFolderBrowser
+{
+    public static string PickFolder()
+    {
+        var dialog = (IFileDialog)new FileOpenDialogRCW();
+        uint options;
+        dialog.GetOptions(out options);
+        options |= FOS.FOS_PICKFOLDERS | FOS.FOS_FORCEFILESYSTEM;
+        dialog.SetOptions(options);
+        int result = 0;
+        try
+        {
+            result = dialog.Show(IntPtr.Zero);
+        }
+        catch (Exception)
+        {
+            return null;
+        }
+        
+        if (result == 0) // S_OK
+        {
+            dialog.GetResult(out IShellItem item);
+            item.GetDisplayName(SIGDN.SIGDN_FILESYSPATH, out IntPtr pszString);
+            string path = Marshal.PtrToStringAuto(pszString);
+            Marshal.FreeCoTaskMem(pszString);
+            return path;
+        }
+        return null;
+    }
+
+    [ComImport]
+    [Guid("DC1C5A9C-E88A-4DDE-A5A1-60F82A20AEF7")]
+    private class FileOpenDialogRCW { }
+
+    [ComImport]
+    [Guid("42f85136-db7e-439c-85f1-e4075d135fc8")]
+    [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    private interface IFileDialog
+    {
+        int Show(IntPtr parent);
+        void SetFileTypes(uint cFileTypes, IntPtr rgFilterSpec);
+        void SetFileTypeIndex(uint iFileType);
+        void GetFileTypeIndex(out uint piFileType);
+        void Advise(IntPtr pfde, out uint pdwCookie);
+        void Unadvise(uint dwCookie);
+        void SetOptions(uint fos);
+        void GetOptions(out uint pfos);
+        void SetDefaultFolder(IShellItem psi);
+        void SetFolder(IShellItem psi);
+        void GetFolder(out IShellItem ppsi);
+        void GetCurrentSelection(out IShellItem ppsi);
+        void SetFileName([MarshalAs(UnmanagedType.LPWStr)] string pszName);
+        void GetFileName(out IntPtr pszName);
+        void SetTitle([MarshalAs(UnmanagedType.LPWStr)] string pszTitle);
+        void SetOkButtonLabel([MarshalAs(UnmanagedType.LPWStr)] string pszText);
+        void SetFileNameLabel([MarshalAs(UnmanagedType.LPWStr)] string pszLabel);
+        void GetResult(out IShellItem ppsi);
+        void AddPlace(IShellItem psi, uint fdap);
+        void SetDefaultExtension([MarshalAs(UnmanagedType.LPWStr)] string pszDefaultExtension);
+        void Close(int hr);
+        void SetClientGuid(IntPtr guid);
+        void ClearClientData();
+        void SetFilter(IntPtr pFilter);
+    }
+
+    [ComImport]
+    [Guid("43826D1E-E718-42EE-BC55-A1E261C37BFE")]
+    [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    private interface IShellItem
+    {
+        void BindToHandler(IntPtr pbc, ref Guid bhid, ref Guid riid, out IntPtr ppv);
+        void GetParent(out IShellItem ppsi);
+        void GetDisplayName(SIGDN sigdnName, out IntPtr ppszName);
+        void GetAttributes(uint sfgaoMask, out uint psfgaoAttribs);
+        void Compare(IShellItem psi, uint hint, out int piOrder);
+    }
+
+    private enum SIGDN : uint
+    {
+        SIGDN_FILESYSPATH = 0x80058000
+    }
+
+    private static class FOS
+    {
+        public const uint FOS_PICKFOLDERS = 0x00000020;
+        public const uint FOS_FORCEFILESYSTEM = 0x00000040;
+    }
+}
