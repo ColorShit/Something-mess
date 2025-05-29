@@ -1,0 +1,93 @@
+public void Load()
+{
+    FileDialogWin32.OpenFileName openFileName = new FileDialogWin32.OpenFileName();
+    openFileName.filter = "文件(*.ioaw)\0*.ioaw\0\0";
+    openFileName.file = new string(new char[256]);
+    openFileName.maxFile = openFileName.file.Length;
+    openFileName.fileTitle = new string(new char[64]);
+    openFileName.maxFileTitle = openFileName.fileTitle.Length;
+    openFileName.initialDir = Application.streamingAssetsPath.Replace('/', '\\');//默认路径
+    openFileName.title = "选择文件";
+    openFileName.flags = 0x00080000 | 0x00001000 | 0x00000800 | 0x00000008;
+    if (FileDialogWin32.GetOpenFileName(openFileName)){}
+    else{}
+}
+
+public void Save()
+{
+    FileDialogWin32.OpenFileName openFileName = new FileDialogWin32.OpenFileName();
+    openFileName.structSize = Marshal.SizeOf(openFileName);
+
+    openFileName.filter = "文件(*.ioaw)\0*.ioaw\0\0";
+    openFileName.file = new string(new char[256]);
+    openFileName.maxFile = openFileName.file.Length;
+    openFileName.fileTitle = new string(new char[64]);
+    openFileName.maxFileTitle = openFileName.fileTitle.Length;
+    openFileName.initialDir = UnityEngine.Application.streamingAssetsPath.Replace('/', '\\');//默认路径
+    openFileName.title = "保存文件";
+    openFileName.flags = 0x00080000 | 0x00001000 | 0x00000800 | 0x00000008;
+    if (FileDialogWin32.GetSaveFileName(openFileName))
+    {}
+    else
+    {}
+}
+
+public class FileDialogWin32
+{
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]
+    public class OpenFileName
+    {
+        public int structSize = Marshal.SizeOf(typeof(OpenFileName));
+        public IntPtr hwndOwner = IntPtr.Zero;
+        public IntPtr hInstance = IntPtr.Zero;
+        public string filter = null;
+        public string customFilter = null;
+        public int maxCustFilter = 0;
+        public int filterIndex = 0;
+
+        public string file = null;
+        public int maxFile = 0;
+        public string fileTitle = null;
+        public int maxFileTitle = 0;
+
+        public string initialDir = null;
+        public string title = null;
+        public int flags = 0;
+        public short fileOffset = 0;
+        public short fileExtension = 0;
+        public string defExt = null;
+        public IntPtr custData = IntPtr.Zero;
+        public IntPtr hook = IntPtr.Zero;
+        public string templateName = null;
+        public IntPtr reservedPtr = IntPtr.Zero;
+        public int reservedInt = 0;
+        public int flagsEx = 0;
+    }
+
+    [DllImport("Comdlg32.dll", CharSet = CharSet.Auto)]
+    public static extern bool GetOpenFileName([In, Out] OpenFileName ofn);
+
+    [DllImport("Comdlg32.dll", CharSet = CharSet.Auto)]
+    public static extern bool GetSaveFileName([In, Out] OpenFileName ofn);
+
+    [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
+    public static extern IntPtr SHBrowseForFolder(ref BROWSEINFO lpbi);
+
+    [DllImport("shell32.dll", CharSet = CharSet.Auto)]
+    public static extern bool SHGetPathFromIDList(IntPtr pidList, IntPtr path);
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+    public struct BROWSEINFO
+    {
+        public IntPtr hwndOwner;
+        public IntPtr pidlRoot;
+        public string pszDisplayName;
+        public string lpszTitle;
+        public uint ulFlags;
+        public IntPtr lpfn;
+        public int lParam;
+        public int iImage;
+    }
+
+    
+}
