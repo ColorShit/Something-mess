@@ -1,3 +1,46 @@
+public bool PackageZip()
+{
+    FileDialogWin32.OpenFileName openFileName = new FileDialogWin32.OpenFileName();
+    openFileName.structSize = Marshal.SizeOf(openFileName);
+
+    openFileName.filter = "文件(*.zip)\0*.zip\0\0";
+    openFileName.file = new string(new char[256]);
+    openFileName.maxFile = openFileName.file.Length;
+    openFileName.fileTitle = new string(new char[64]);
+    openFileName.maxFileTitle = openFileName.fileTitle.Length;
+    openFileName.initialDir = UnityEngine.Application.streamingAssetsPath.Replace('/', '\\');//默认路径
+    openFileName.title = "保存文件";
+    openFileName.flags = 0x00080000 | 0x00001000 | 0x00000800 | 0x00000008;
+    if (FileDialogWin32.GetSaveFileName(openFileName))
+    {
+        string tempFilePath = "";
+        if (openFileName.file.Contains(".zip"))
+            tempFilePath = openFileName.file;
+        else
+            tempFilePath = openFileName.file + ".zip";
+
+        string json = GenerateJson();
+
+        using (FileStream zipToOpen = new FileStream(tempFilePath, FileMode.Create))
+        {
+            using (ZipArchive archive = new ZipArchive(zipToOpen, ZipArchiveMode.Update))
+            {
+                var jsonEntry = archive.CreateEntry("player_data.ioaw");
+                using (StreamWriter writer = new StreamWriter(jsonEntry.Open()))
+                {
+                    writer.Write(json);
+                }
+            }
+        }
+        return true;
+    }
+    else
+    {
+        Debug.LogWarning("用户取消了打包文件");
+        return false;
+    }
+}
+
 public void Load()
 {
     FileDialogWin32.OpenFileName openFileName = new FileDialogWin32.OpenFileName();
