@@ -1,0 +1,61 @@
+using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.UI;
+
+public class ImageViewer : MonoBehaviour, IScrollHandler, IDragHandler
+{
+    [SerializeField] RawImage m_Image;
+    [SerializeField] RectTransform targetRT;
+
+    [SerializeField, Range(0.0f, 2.0f)] float speed;
+    Vector3 oriScale;
+    Vector2 oriAp;
+
+    private void Awake()
+    {
+        oriScale = targetRT.localScale;
+        oriAp = targetRT.anchoredPosition;
+        lastScale = oriScale;
+    }
+
+    Vector3 lastScale;
+
+    public void OnScroll(PointerEventData eventData)
+    {
+        float scroll = eventData.scrollDelta.y;
+        Vector3 scale = targetRT.localScale;
+
+        scale += Vector3.one * scroll * speed;
+        scale = ClampScale(scale);
+
+        if (scale == Vector3.one)
+        {
+            targetRT.anchoredPosition = oriAp;
+            lastScale = Vector3.one;
+        }
+        else
+        {
+            float coefficient = scale.x / lastScale.x;
+            Vector3 oriVec2 = Input.mousePosition - targetRT.position;
+            targetRT.position = Input.mousePosition - oriVec2 * coefficient;
+        }
+
+        lastScale = scale;
+        targetRT.localScale = scale;
+    }
+
+    private static Vector3 ClampScale(Vector3 scale)
+    {
+        float current = scale.x;
+        current = Mathf.Clamp(current, 1, 10);
+        return new Vector3(current, current, 1);
+    }
+
+    public void OnDrag(PointerEventData eventData)
+    {
+        if (eventData.button == PointerEventData.InputButton.Left)
+        {
+            targetRT.anchoredPosition += eventData.delta;
+        }
+    }
+}
