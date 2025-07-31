@@ -1,0 +1,27 @@
+using UnityEngine;
+using UnityEngine.EventSystems;
+
+public class XRCustomInteractor : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
+{
+    public Renderer meshRenderer;
+
+    public MaterialPropertyBlock materialPropertyBlock;
+
+    private void Awake()
+    {
+        materialPropertyBlock = new MaterialPropertyBlock();
+        meshRenderer.GetPropertyBlock(materialPropertyBlock);
+    }
+
+    public void OnPointerEnter(PointerEventData eventData)
+    {
+        materialPropertyBlock.SetColor("_BaseColor", Color.blue);
+        meshRenderer.SetPropertyBlock(materialPropertyBlock);
+    }
+
+    public void OnPointerExit(PointerEventData eventData)
+    {
+        materialPropertyBlock.SetColor("_BaseColor", Color.white);
+        meshRenderer?.SetPropertyBlock(materialPropertyBlock);
+    }
+}
