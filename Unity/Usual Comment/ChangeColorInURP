@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-public class XRCustomInteractor : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
+public class MaterialColorInteractor : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 {
     public Renderer meshRenderer;
 
