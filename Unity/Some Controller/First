@@ -1,0 +1,104 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class ObjTransform : MonoBehaviour
+{
+    public static ObjTransform Instance;
+    public TransformBase[] transObjs;
+
+    public string test_PartID;
+    public string test_value;
+    public string test_speed;
+
+    public string test_PartID2;
+    public string test_value2;
+    public string test_speed2;
+    bool isStartDoevents = false;
+    private void Awake()
+    {
+        Instance = this;
+
+        if (!isStartDoevents)
+            StartCoroutine("DoEvents");
+    }
+
+    // 101 x : 0, -0.7
+    // 105 z : 0, -0.4
+    // 106 y : 0, -0.16
+    // 107 x : 0, 0.075
+    // 108 z : 0, -0.06
+    // 109 x : 0, 0.05
+    // 110 z : 0, -0.014
+    // 111 z : 0, 0.1
+
+    public void ReadTransform(string json)
+    {
+        TransformMsg msg = JsonUtility.FromJson<TransformMsg>(json);
+        Debug.Log(json);
+        int index = Convert.ToInt32(msg.Part_ID) - 101;
+        //Debug.Log(msg);
+
+        fsFunc temp = transObjs[index].GetEvent(msg.Move_axis_value, msg.Move_axis_speed);
+        if (temp is not null) events.Add(temp);
+    }
+
+    List<fsFunc> events = new List<fsFunc>(capacity: 24);
+    List<fsFunc> deleteEvents = new List<fsFunc>(capacity: 24);
+
+    IEnumerator DoEvents()
+    {
+        while (true)
+        {
+            foreach (fsFunc func in events)
+            {
+                if (func.Invoke())
+                {
+                    deleteEvents.Add(func);
+                }
+            }
+            foreach (var item in deleteEvents)
+            {
+                events.Remove(item);
+            }
+            deleteEvents.Clear();
+            yield return new WaitForSeconds(0.025f);
+        }
+    }
+}
+
+[Serializable]
+public class TransformMsg
+{
+    public string Part_ID;
+    public string Move_axis_value;
+    public string Move_axis_speed;
+}
+
+using System;
+using UnityEngine;
+
+public class RobotRoad : TransformBase
+{
+    private void Awake()
+    {
+        isRun = false;
+    }
+
+    public override fsFunc GetEvent(string value, string speed)
+    {
+        if (run condition is true)
+            return MoveEvent;
+        else 
+            return null;
+    }
+    bool MoveEvent()
+    {
+        if (terminal condition is true)
+            return true;
+        else
+            return false;
+    }
+
+}
