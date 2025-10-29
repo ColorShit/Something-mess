@@ -1,3 +1,5 @@
+// The following code's ability now is only "when use, when set". Can't to suit async function and delay function.
+
 public class ExplainString
 {
     readonly struct FrameEntry
