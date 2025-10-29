@@ -14,6 +14,7 @@ public class ExplainString
 
     int writeIndex;
 
+    // Try to set these two parameters within a controllable range(make "stringMaxLength" is fulled before "stringMaxCount" is full) 
     public ExplainString(int stringMaxLength, int stringMaxCount)
     {
         chars = new char[stringMaxLength];
@@ -26,17 +27,22 @@ public class ExplainString
         currentStringCount = 0;
         allStringCount = 0;
     }
+
     public bool TryStoreData(string str)
     {
         int tempLen = str.Length;
         if (writeIndex + tempint > chars.Length)
             return false;
+        // The following code snip is unnceessary. Usually when "chars" is full before "frames" is full, but use it when we can't promise this condition. 
+        // if (allStringCount >= frames.Length)
+        // return false;
         str.CopyTo(0, chars, writeIndex, tempLen);
         frames[allStringCount] = new FrameEntry(writeIndex, tempLen);
         writeIndex += tempLen;
         allStringCount++;
         return true;
     }
+
     public bool TryStoreData(char c)
     {
         if (writeIndex + 1 > chars.Length)
