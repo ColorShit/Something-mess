@@ -28,12 +28,12 @@ public class ExplainString
     }
     public bool TryStoreData(string str)
     {
-        int tempint = str.Length;
+        int tempLen = str.Length;
         if (writeIndex + tempint > chars.Length)
             return false;
-        str.CopyTo(0, chars, writeIndex, tempint);
-        frames[allStringCount] = new FrameEntry(writeIndex, tempint);
-        writeIndex += tempint;
+        str.CopyTo(0, chars, writeIndex, tempLen);
+        frames[allStringCount] = new FrameEntry(writeIndex, tempLen);
+        writeIndex += tempLen;
         allStringCount++;
         return true;
     }
