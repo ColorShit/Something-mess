@@ -33,7 +33,7 @@ public class ExplainString
         int tempLen = str.Length;
         if (writeIndex + tempint > chars.Length)
             return false;
-        // The following code snip is unnceessary. Usually when "chars" is full before "frames" is full, but use it when we can't promise this condition. 
+        // The following code snip is unnecessary. Usually when "chars" is full before "frames" is full, but use it when we can't promise this condition. 
         // if (allStringCount >= frames.Length)
         // return false;
         str.CopyTo(0, chars, writeIndex, tempLen);
