@@ -1,0 +1,61 @@
+public class ExplainString
+{
+    readonly struct FrameEntry
+    {
+        readonly public int start;
+        readonly public int length;
+        public FrameEntry(int s, int l) { start = s; length = l; }
+    }
+    readonly char[] chars;
+    readonly FrameEntry[] frames;
+
+    int allStringCount;
+    int currentStringCount;
+
+    int writeIndex;
+
+    public ExplainString(int stringMaxLength, int stringMaxCount)
+    {
+        chars = new char[stringMaxLength];
+        frames = new FrameEntry[stringMaxCount];
+    }
+
+    public void RestartStore()
+    {
+        writeIndex = 0;
+        currentStringCount = 0;
+        allStringCount = 0;
+    }
+    public bool TryStoreData(string str)
+    {
+        int tempint = str.Length;
+        if (writeIndex + tempint > chars.Length)
+            return false;
+        str.CopyTo(0, chars, writeIndex, tempint);
+        frames[allStringCount] = new FrameEntry(writeIndex, tempint);
+        writeIndex += tempint;
+        allStringCount++;
+        return true;
+    }
+    public bool TryStoreData(char c)
+    {
+        if (writeIndex + 1 > chars.Length)
+            return false;
+        chars[writeIndex] = c;
+        frames[allStringCount] = new FrameEntry(writeIndex, 1);
+        writeIndex++;
+        allStringCount++;
+        return true;
+    }
+
+    public ReadOnlySpan<char> GetData()
+    {
+        if (currentStringCount < allStringCount)
+        {
+            FrameEntry tempFrame = frames[currentStringCount];
+            currentStringCount++;
+            return chars.AsSpan(tempFrame.start, tempFrame.length);
+        }
+        return Span<char>.Empty;
+    }
+}
