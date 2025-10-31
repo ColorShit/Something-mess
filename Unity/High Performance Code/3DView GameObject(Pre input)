@@ -1,0 +1,131 @@
+enum PreInputState
+{
+    Idle, PreselectH, PreselectV, LockedH, LockedV
+}
+
+Vector2 mouseDelta;
+PreInputState pis;
+float absDeltaX;
+float absDeltaY;
+int frameCount;
+int confirmFrameCount = 8;
+float sumDeltaX;
+float sumDeltaY;
+float deadZone = 0.02f;
+float sensitivity = 2f;
+float axisRatio = 1.6f;
+float unlockRatio = 1.4f;
+void Rotate()
+{
+    mouseDelta = Mouse.current.delta.ReadValue() * sensitivity;
+    absDeltaX = Mathf.Abs(mouseDelta.x);
+    absDeltaY = Mathf.Abs(mouseDelta.y);
+    sumDeltaX += absDeltaX;
+    sumDeltaY += absDeltaY;
+    switch (pis)
+    {
+        case PreInputState.Idle:
+            if (absDeltaX > absDeltaY * axisRatio && absDeltaX > deadZone)
+            {
+                pis = PreInputState.PreselectH;
+                frameCount = 0;
+            }
+            else if (absDeltaY > absDeltaX * axisRatio && absDeltaY > deadZone)
+            {
+                pis = PreInputState.PreselectV;
+                frameCount = 0;
+            }
+
+            if (absDeltaX > absDeltaY)
+            {
+                ApplyRotate(0, mouseDelta.x * 0.1f);
+            }
+            else
+            {
+                ApplyRotate(mouseDelta.y * 0.1f, 0);
+            }
+            break;
+        case PreInputState.PreselectH:
+            if (sumDeltaX > axisRatio * sumDeltaY)
+            {
+                frameCount++;
+                if (frameCount > confirmFrameCount)
+                {
+                    frameCount = 0;
+                    pis = PreInputState.LockedH;
+                }
+                ApplyRotate(0, mouseDelta.x);
+            }
+            else
+            {
+                pis = PreInputState.Idle;
+            }
+            break;
+        case PreInputState.PreselectV:
+            if (sumDeltaY > axisRatio * sumDeltaX)
+            {
+                frameCount++;
+                if (frameCount > confirmFrameCount)
+                {
+                    frameCount = 0;
+                    pis = PreInputState.LockedV;
+                }
+                ApplyRotate(mouseDelta.y, 0);
+            }
+            else
+            {
+                pis = PreInputState.Idle;
+            }
+            break;
+        case PreInputState.LockedH:
+            if (sumDeltaX < unlockRatio * sumDeltaY)
+            {
+                pis = PreInputState.Idle;
+                sumDeltaX = 0;
+                sumDeltaY = 0;
+                frameCount = 0;
+            }
+            else
+            {
+                if (frameCount == confirmFrameCount)
+                {
+                    sumDeltaX = 1.9f;
+                    sumDeltaY = 1f;
+                    frameCount = 0;
+                }
+                else
+                    frameCount++;
+            }
+            ApplyRotate(0, mouseDelta.x);
+            break;
+        case PreInputState.LockedV:
+            if (sumDeltaY < unlockRatio * sumDeltaX)
+            {
+                pis = PreInputState.Idle;
+                sumDeltaX = 0;
+                sumDeltaY = 0;
+                frameCount = 0;
+            }
+            else
+            {
+                if (frameCount == confirmFrameCount)
+                {
+                    sumDeltaY = 1.9f;
+                    sumDeltaX = 1f;
+                    frameCount = 0;
+                }
+                else
+                    frameCount++;
+            }
+            ApplyRotate(mouseDelta.y, 0);
+            break;
+        default:
+            break;
+    }
+}
+void ApplyRotate(float x, float y)
+{
+    currentObjEular.x -= (x * 0.25f);
+    currentObjEular.y -= (y * 0.25f);
+    usingObj.transform.eulerAngles = currentObjEular;
+}
