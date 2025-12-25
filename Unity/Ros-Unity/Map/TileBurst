@@ -147,8 +147,9 @@ public class TileBurst : MonoBehaviour
             job.Execute(index);
         }
 
-        //JobHandle handle = job.Schedule(tileCellWidth * tileCellHeight, 64);
-        //handle.Complete();
+        // if use below code snip, cancel the note with "[NativeDisableParallelForRestriction]" of "PatchRefreshJob"
+        /* JobHandle handle = job.Schedule(tileCellWidth * tileCellHeight, 64);
+          handle.Complete(); */
     }
 
 
@@ -175,6 +176,7 @@ public class TileBurst : MonoBehaviour
 public struct PatchRefreshJob : IJobParallelFor
 {
     [ReadOnly] public NativeArray<sbyte> occupancyData;
+    // [NativeDisableParallelForRestriction]
     [WriteOnly] public NativeArray<Color32> colors;
 
     public PatchMath.PatchTransform_Burst patch;
