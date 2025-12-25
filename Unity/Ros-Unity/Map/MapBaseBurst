@@ -1,0 +1,262 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using Unity.Mathematics;
+using UnityEngine;
+using UnityEngine.InputSystem;
+
+public class MapBaseBurst : MonoBehaviour
+{
+    [SerializeField] RectTransform m_Rt;
+    float2 originPos;
+    float tileWorldSize;
+    int mapWidth;
+    int mapHeight;
+    int tileCellCount = 32;
+    float tileResolution;
+    int tileHorCount;
+    int tileVertCount;
+    public Camera usingCamera;
+
+    TileBurst[,] tiles;
+    public TileBurst tilePrefab;
+
+    // Test parameter
+    public float yawTestAngle;
+    public int mapHorCellCount;
+    public int mapVertCellCount;
+
+    HashSet<TileBurst> firstFilterTiles = new HashSet<TileBurst>(8);
+    HashSet<TileBurst> secondFilterTiles = new HashSet<TileBurst>(8);
+
+    private void Awake()
+    {
+        CreateMapMessage cm = CreateMapMessage.GetMapMessage(mapHorCellCount, mapVertCellCount);
+        InitMap(cm.originX, cm.originY, cm.cellHorCount, cm.cellVecCount, cm.resolution);
+    }
+
+    private void Update()
+    {
+        if (Mouse.current.leftButton.wasPressedThisFrame)
+        {
+            Ray ray = usingCamera.ScreenPointToRay(Input.mousePosition);
+
+            if (!Physics.Raycast(ray, out RaycastHit hit)) return;
+
+            TileBurst tile = hit.collider.GetComponent<TileBurst>();
+            if (tile == null) return;
+
+            // local是以transform的中心为基准生成相对角度，因此每个角度都需要加上左下角的相反值来取得相对于左下角的坐标
+            /// 以下两句debug是根据鼠标点击确认点击块在地图中的具体位置，不可以删除
+            Vector3 local = tile.transform.InverseTransformPoint(hit.point);
+            int cx = Mathf.FloorToInt(local.x / tileResolution);
+            int cy = Mathf.FloorToInt(local.y / tileResolution);
+
+            RefreshMap(
+               tile.tileX * tileWorldSize + (cx + tileCellCount / 2) * tileResolution,
+               tile.tileY * tileWorldSize + (cy + tileCellCount / 2) * tileResolution);
+        }
+    }
+
+    public void InitMap(float OriginX, float OriginY, int MapWidth, int MapHeight, float resolution)
+    {
+        mapWidth = MapWidth;
+        mapHeight = MapHeight;
+        tileResolution = resolution;
+        tileWorldSize = tileCellCount * resolution;
+        originPos = new float2(OriginX, OriginY);
+
+        int tempInt1 = MapWidth % tileCellCount;
+        if (tempInt1 > 0)
+            tileHorCount = MapWidth / tileCellCount + 1;
+        else
+            tileHorCount = MapWidth / tileCellCount;
+        tempInt1 = MapHeight % tileCellCount;
+        if (tempInt1 > 0)
+            tileVertCount = MapHeight / tileCellCount + 1;
+        else
+            tileVertCount = MapHeight / tileCellCount;
+
+        float originalX = transform.localPosition.x - MapWidth * resolution / 2;
+        float originalY = transform.localPosition.y - MapHeight * resolution / 2;
+        float tempResolution = resolution * tileCellCount;
+
+        tiles = new TileBurst[tileHorCount, tileVertCount];
+        int tileWidth, tileHeight = tileCellCount;
+        int tempInt2 = tileVertCount - 1;
+        tempInt1 = tileHorCount - 1;
+        float2 tempFloat2 = new float2(1, 1);
+
+        for (int y = 0; y < tileVertCount; y++)
+        {
+            if (y == tempInt2)
+                tileHeight = MapHeight - (y * 32);
+            tileWidth = 32;
+            for (int x = 0; x < tileHorCount; x++)
+            {
+                if (x == tempInt1)
+                    tileWidth = MapWidth - (x * 32);
+                tempFloat2 = new float2(tileWidth * resolution, tileHeight * resolution);
+
+                TileBurst tile = GameObject.Instantiate(tilePrefab, m_Rt);
+
+                tile.name = string.Concat(y, "_", x);
+                tile.rt.sizeDelta = tempFloat2;
+                tile.transform.localPosition = new Vector3(
+                    originalX + x * tempResolution + tempFloat2.x / 2,
+                    originalY + y * tempResolution + tempFloat2.y / 2, 0);
+                tile.Init(x, y, tileWidth, tileHeight, resolution);
+                tiles[x, y] = tile;
+            }
+        }
+
+    }
+    Vector2[] patchCorners = new Vector2[4];
+    public void RefreshMap(float cx, float cy)
+    {
+        PatchGrid refreshData = PatchGrid.CreateTestRefreshGrid(cx, cy, yawTestAngle);
+
+        if (refreshData.resolution != tileResolution) return;
+
+        firstFilterTiles.Clear();
+        secondFilterTiles.Clear();
+
+        GetPatchCorners(refreshData.width * tileResolution,
+            refreshData.height * tileResolution,
+            refreshData.orientation,
+            new Vector2(refreshData.originX, refreshData.originY),
+            ref patchCorners);
+
+        GetTileRangeFromCorners();
+
+        Span<Vector2> obbCorners = patchCorners.AsSpan(0, 4);
+        foreach (var ft in firstFilterTiles)
+        {
+            if (FilterByOBB(
+                obbCorners,
+                new Vector2(ft.tileX * tileWorldSize, ft.tileY * tileWorldSize),
+                new Vector2(ft.tileX * tileWorldSize + tileWorldSize, ft.tileY * tileWorldSize + tileWorldSize)))
+                secondFilterTiles.Add(ft);
+        }
+
+        float patchWidthMeters = refreshData.width * tileResolution;
+        float patchHeightMeters = refreshData.height * tileResolution;
+        var patch = PatchMath.MakePatch_Burst(
+            refreshData.originX,
+            refreshData.originY,
+            refreshData.orientation,
+            patchWidthMeters,
+            patchHeightMeters);
+
+        Span<sbyte> tempDatas = refreshData.data.AsSpan();
+        foreach (var ft in secondFilterTiles)
+        {
+            ft.RefreshFromPatch(
+                patch,
+                refreshData.width,
+                originPos,
+                0,
+                refreshData.resolution,
+                mapWidth,
+                tempDatas);
+            ft.ApplyIfDirty();
+        }
+    }
+
+    static void GetPatchCorners(float Width, float Height, float yawAngle, Vector2 leftBottomPoint, ref Vector2[] outputArray)
+    {
+        float cosRad = Mathf.Cos(yawAngle);
+        float sinRad = Mathf.Sin(yawAngle);
+        Vector2 dirRad = new Vector2(cosRad * Width, sinRad * Width);
+        Vector2 dirRevRad = new Vector2(-sinRad * Height, cosRad * Height);
+
+        outputArray[0] = leftBottomPoint;
+        outputArray[1] = leftBottomPoint + dirRad;
+        outputArray[2] = leftBottomPoint + dirRad + dirRevRad;
+        outputArray[3] = leftBottomPoint + dirRevRad;
+    }
+
+    static bool FilterByOBB(Span<Vector2> obbCorners, Vector2 tileMin, Vector2 tileMax)
+    {
+        Vector2[] aabbCorners = new Vector2[4];
+        aabbCorners[0] = tileMin;
+        aabbCorners[1] = new Vector2(tileMax.x, tileMin.y);
+        aabbCorners[2] = tileMax;
+        aabbCorners[3] = new Vector2(tileMin.x, tileMax.y);
+
+        Vector2 obbEdge1 = (obbCorners[1] - obbCorners[0]).normalized;
+        Vector2 obbEdge2 = (obbCorners[3] - obbCorners[0]).normalized;
+
+        Vector2 axisX = new Vector2(1, 0);
+        Vector2 axisY = new Vector2(0, 1);
+
+        Vector2[] axes = { obbEdge1, obbEdge2, axisX, axisY };
+
+        foreach (var item in axes)
+        {
+            if (ObbIsSeparated(item, obbCorners, aabbCorners))
+                return false;
+        }
+
+        return true;
+    }
+
+    static bool ObbIsSeparated(Vector2 axis, Span<Vector2> poly1, Vector2[] poly2)
+    {
+        float min1 = float.MaxValue, max1 = float.MinValue;
+        float min2 = float.MaxValue, max2 = float.MinValue;
+
+        foreach (var p1 in poly1)
+        {
+            float proj = Vector2.Dot(p1, axis);
+            min1 = Mathf.Min(min1, proj);
+            max1 = Mathf.Max(max1, proj);
+        }
+
+        foreach (var p2 in poly2)
+        {
+            float proj = Vector2.Dot(p2, axis);
+            min2 = Mathf.Min(min2, proj);
+            max2 = Mathf.Max(max2, proj);
+        }
+
+        return (max1 < min2 || max2 < min1);
+    }
+
+    void GetTileRangeFromCorners()
+    {
+        float minX = float.MaxValue, maxX = float.MinValue, minY = float.MaxValue, maxY = float.MinValue;
+        foreach (var item in patchCorners)
+        {
+            if (item.x < minX) minX = item.x;
+            if (item.x > maxX) maxX = item.x;
+            if (item.y < minY) minY = item.y;
+            if (item.y > maxY) maxY = item.y;
+        }
+
+        float relMinX = minX - originPos.x;
+        float relMaxX = maxX - originPos.x;
+        float relMinY = minY - originPos.y;
+        float relMaxY = maxY - originPos.y;
+
+        float minTileX = Mathf.FloorToInt(relMinX / tileWorldSize);
+        float maxTileX = Mathf.FloorToInt(relMaxX / tileWorldSize);
+        float minTileY = Mathf.FloorToInt(relMinY / tileWorldSize);
+        float maxTileY = Mathf.FloorToInt(relMaxY / tileWorldSize);
+
+        for (int i = 0; i < tileHorCount; i++)
+        {
+            if (i <= maxTileX && i >= minTileX)
+            {
+                for (int j = 0; j < tileVertCount; j++)
+                {
+                    if (j <= maxTileY && j >= minTileY)
+                    {
+                        firstFilterTiles.Add(tiles[i, j]);
+                        //tiles[i, j].MakeTileBeRed();
+                    }
+                }
+            }
+        }
+    }
+}
