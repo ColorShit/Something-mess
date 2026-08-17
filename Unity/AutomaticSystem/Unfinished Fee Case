@@ -1,0 +1,309 @@
+using UnityEngine;
+using UnityEngine.EventSystems;
+using EPOOutline;
+using TMPro;
+
+public class DeviceBase : MonoBehaviour
+{
+    public float cameraFocusDistance = 2f;
+    public virtual float GetCameraFocusDistance() 
+    { 
+        return cameraFocusDistance + 
+            ((Mathf.Max(Mathf.Max(transform.localScale.x, transform.localScale.y), transform.localScale.z) - 1) * 0.2f);
+    }
+    // Manual Controller Type
+    public ManualCtrlType mc_Type;
+    public int msgPanelIndex = 0;
+    [SerializeField] protected Outlinable outLine;
+
+    public virtual void OnActive()
+    {
+        
+    }
+
+    #region Interact Part
+    const float DoubleClickTime = 0.25f;
+    static float lastClickTime = -1f;
+    static float nowClickTime;
+    static bool IsDoubleClick()
+    {
+        nowClickTime = Time.unscaledTime;
+
+        if (nowClickTime - lastClickTime < DoubleClickTime)
+        {
+            lastClickTime = -1f;
+            return true;
+        }
+        lastClickTime = nowClickTime;
+        return false;
+    }
+    public void OnPointerClick(PointerEventData eventData)
+    {
+        if (eventData.button == PointerEventData.InputButton.Left)
+        {
+            if (IsDoubleClick())
+            {
+                MainController.orbitCamera.SmoothSetPivot(transform.position, GetCameraFocusDistance());
+                return;
+            }
+
+            outLine.enabled = true;
+            MainController.SwitchLastDevice(this);
+        }
+    }
+    public void CancelSelected()
+    {
+        outLine.enabled = false;
+    }
+    public void ManualSelected()
+    {
+        
+    }
+    #endregion
+
+    public virtual void OnSyncTransformMsg(TextMeshProUGUI[] texts)
+    {
+        texts[0].text = (transform.position.x * 1000).ToString("F0");
+        texts[1].text = (transform.position.y * 1000).ToString("F0");
+        texts[2].text = (transform.position.z * 1000).ToString("F0");
+        texts[3].text = transform.localEulerAngles.x.ToString("F2");
+        texts[4].text = transform.localEulerAngles.y.ToString("F2");
+        texts[5].text = transform.localEulerAngles.z.ToString("F2");
+    }
+
+    public virtual void OnSyncFuncPanel()
+    {
+        
+    }
+}
+
+using UnityEngine;
+using UnityEngine.EventSystems;
+
+public class ConsumableDevice : ForceInteractDevice, IPointerClickHandler
+{
+    /// <summary>
+    /// Consumable会拒绝主动检测动力源，与动力源发生相关碰撞只会在动力源中进行逻辑检测
+    /// </summary>
+    /// <param name="collision"></param>
+    private void OnCollisionEnter(Collision collision)
+    {
+        if (collision.gameObject.layer != 6) return;
+
+        ForceInteractDevice temp = collision.gameObject.GetComponent<ForceInteractDevice>();
+
+        if (temp == null) return;
+
+        if (temp.mc_Type != ManualCtrlType.Consumable) return;
+
+        // ManualCtrlType.Consumable
+        if (temp.parentDevice)
+        {
+            if (temp.parentDevice.mc_Type == ManualCtrlType.PowerSource) return;
+
+            if (temp.parentDevice == this) return;
+
+            if (deviceLayer > temp.deviceLayer) return;
+
+            ForceInteractDevice myParent = parentDevice;
+
+            while (myParent != null) 
+            {
+                if (myParent == temp)
+                {
+                    return;
+                }
+
+                myParent = myParent.parentDevice;
+            }
+
+            temp.ClearSelfFromParent();
+        }
+
+        temp.parentDevice = this;
+        if (!childDevices.Contains(temp)) childDevices.Add(temp);
+        temp.GetComponent<ConsumableDevice>().SelfAdjustDeviceLayer();
+    }
+
+    private void OnCollisionExit(Collision collision)
+    {
+        if (isControlledByForceSystem) return;
+
+        if (collision.gameObject.layer != 6) return;
+
+        ConsumableDevice temp = collision.gameObject.GetComponent<ConsumableDevice>();
+
+        if (temp == null) return;
+
+        if (temp.mc_Type != ManualCtrlType.Consumable) return;
+
+        if (temp.parentDevice == null) return;
+
+        if (temp.parentDevice != this) return;
+
+        childDevices.Remove(temp);
+        temp.ClearSelfFromParent();
+    }
+
+    /// <summary>
+    /// 被调用这个方法的ConsumableDevice将会被作为直接 接触 动力来源的物体(例如履带，旋转托盘)
+    /// </summary>
+    public override void GiveInitialLayer()
+    {
+        deviceLayer = 1;
+
+        if (childDevices.Count > 0)
+        {
+            foreach (var item in childDevices)
+            {
+                item.SelfAdjustDeviceLayer();
+            }
+        }
+    }
+
+    public override void SelfAdjustDeviceLayer()
+    {
+        deviceLayer = parentDevice.deviceLayer + 1;
+        if (childDevices.Count > 0)
+        {
+            foreach (var item in childDevices)
+            {
+                item.SelfAdjustDeviceLayer();
+            }
+        }
+    }
+
+    public override void GiveOffset(Vector3 offset)
+    {
+        transform.position += offset;
+        foreach (var item in childDevices)
+        {
+            item.GiveOffset(offset);
+        }
+    }
+
+    public override void GiveRotate(Vector3 axis, Vector3 pivot, float angle)
+    {
+#if UNITY_EDITOR
+        Debug.Log(name + " has rotate");
+#endif
+        transform.RotateAround(pivot, axis, angle);
+        foreach (var item in childDevices)
+        {
+            item.GiveRotate(axis, pivot, angle);
+        }
+    }
+
+    public override void ClearSelfFromParent()
+    {
+        if (parentDevice != null)
+        {
+            parentDevice.childDevices.Remove(this);
+            parentDevice = null;
+        }
+
+        deviceLayer = -1;
+
+        if (isControlledByForceSystem)
+        {
+            isControlledByForceSystem = false;
+            m_RigidBody.useGravity = true;
+            m_RigidBody.isKinematic = false;
+        }
+    }
+}
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.Rendering;
+
+/// <summary>
+/// 受力物体分支类
+/// </summary>
+public class ForceObjectDevice : ForceInteractDevice
+{    /// <summary>
+     /// 受力物体无法主动检测动力源，受力物体与动力源得逻辑将会在动力源中发生.
+     /// </summary>
+    public virtual void OnCollisionEnter(Collision collision)
+    {
+        if (collision.gameObject.layer != 6) return;
+
+        ForceInteractDevice temp = collision.gameObject.GetComponent<ForceInteractDevice>();
+
+        if (temp == null) return;
+
+        if (parentDevice == temp || childDevices.Contains(temp))
+        {
+            return;
+        }
+
+        if (temp.mc_Type == ManualCtrlType.PowerSource) return;
+
+        // 此受力物体的受力顺序高于目标物体的受力顺序
+        if (deviceLayer < temp.deviceLayer)
+        {
+            if (SwitchParentByComsumable(temp, this))
+            {
+
+            }
+        }
+        // 此受力物体的受力顺序等于目标物体的受力顺序
+        else if (deviceLayer == temp.deviceLayer)
+        {
+            if (BindParentInConsumables(this, temp))
+            {
+                
+            }
+        }
+        // “此受力物体的受力顺序小于目标物体的受力顺序”，比如“else if (deviceLayer > temp.deviceLayer)”
+        // 受力物体不会处理这种情况，这是因为系统始终遵从的优先级原则：优先受力顺序较高的物体去操纵受力顺序较低的物体
+    }
+
+    /// <summary>
+    /// 受力物体无法主动解绑动力源，相关逻辑会发生在动力源中.
+    /// </summary>
+    /// <param name="collision"></param>
+    public virtual void OnCollisionExit(Collision collision)
+    {
+        if (isControlledByForceSystem) return;
+
+        if (collision.gameObject.layer != 6) return;
+
+        ForceInteractDevice temp = collision.gameObject.GetComponent<ForceInteractDevice>();
+
+        if (temp == null) return;
+
+        if (temp.mc_Type == ManualCtrlType.PowerSource) return;
+
+
+    }
+
+    public override void GiveInitialLayer()
+    {
+        deviceLayer = 1;
+
+        if (childDevices.Count > 0)
+        {
+            foreach (var item in childDevices)
+            {
+                item.SelfAdjustDeviceLayer();
+            }
+        }
+    }
+
+    public override void SelfAdjustDeviceLayer()
+    {
+        deviceLayer = parentDevice.deviceLayer + 1;
+        if (childDevices.Count > 0)
+        {
+            foreach (var item in childDevices)
+            {
+                item.SelfAdjustDeviceLayer();
+            }
+        }
+    }
+}
+
+public class PowerSourceDevice : ForceInteractDevice
+{
+}
