@@ -1,0 +1,58 @@
+public class DynamicContainer<T> where T : MonoBehaviour
+{
+    T[] paras;
+    int wholeLength;
+    int currentLength;
+
+    public DynamicContainer()
+    {
+        paras = new T[16];
+        wholeLength = 16;
+        currentLength = 0;
+    }
+
+    public bool AddPara(T para)
+    {
+        if (para == null)
+            return false;
+
+        if (currentLength == wholeLength)
+            ExpandContainer();
+
+        paras[currentLength] = para;
+        currentLength++;
+        return true;
+    }
+
+    public bool RemovePara(T para)
+    {
+        if (para == null) return false;
+
+        int index = -1;
+        for (int i = 0; i < currentLength; i++)
+        {
+            if (para == paras[i])
+            {
+                index = i;
+                break;
+            }
+        }
+
+        if (index == -1)
+            return false;
+
+        paras[index] = paras[currentLength - 1];
+        paras[currentLength - 1] = null;
+        currentLength--;
+
+        return true;
+    }
+
+    void ExpandContainer()
+    {
+        T[] newParas = new T[wholeLength * 2];
+        Array.Copy(paras, newParas, wholeLength);
+        paras = newParas;
+        wholeLength *= 2;
+    }
+}
