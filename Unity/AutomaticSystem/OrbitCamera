@@ -3,30 +3,25 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public static class EditManager
-{
-    
-}
-
 public class OrbitCamera
 {
     public OrbitCamera(Camera cra)
     {
         m_Camera = cra;
 
-        pivot = cra.transform.position + cra.transform.forward * distance;
+        pivot = Vector3.zero;
 
         distance = Vector3.Distance(cra.transform.position, pivot);
 
         Vector3 dir = (cra.transform.position - pivot).normalized;
 
-        angle.y = Mathf.Asin(dir.y) * Mathf.Rad2Deg;
+        angle.y = -Mathf.Asin(dir.y) * Mathf.Rad2Deg;
         angle.x = Mathf.Atan2(dir.x, dir.z) * Mathf.Rad2Deg;
     }
 
-    public void SetPivotPos(Vector3 v3, Vector3 direction, float Distance = 5f, float pitchAngle = 30f)
+    public void SetPivotPos(Vector3 Pivot, Vector3 direction, float Distance = 5f, float pitchAngle = 30f)
     {
-        pivot = v3;
+        pivot = Pivot;
 
         direction = direction.normalized;
         pitchAngle = Mathf.Clamp(pitchAngle, 0, 45f);
@@ -46,13 +41,14 @@ public class OrbitCamera
         m_Camera.transform.LookAt(pivot);
 
         Vector3 dir = (m_Camera.transform.position - pivot).normalized;
-        angle.y = Mathf.Asin(dir.y) * Mathf.Rad2Deg;
+        // Because direction is camera point to pivot, so I use "+".
+        angle.y = +Mathf.Asin(dir.y) * Mathf.Rad2Deg;
         angle.x = Mathf.Atan2(dir.x, dir.z) * Mathf.Rad2Deg;
     }
 
-    public void SetPivotPos(Vector3 v3, float Distance = 5f, float pitchAngle = 30f)
+    public void SetPivotPos(Vector3 Pivot, float Distance = 5f, float pitchAngle = 30f)
     {
-        pivot = v3;
+        pivot = Pivot;
 
         Vector3 direction = m_Camera.transform.forward.normalized;
         pitchAngle = Mathf.Clamp(pitchAngle, 0, 45f);
@@ -72,11 +68,14 @@ public class OrbitCamera
         m_Camera.transform.LookAt(pivot);
 
         Vector3 dir = (m_Camera.transform.position - pivot).normalized;
-        angle.y = Mathf.Asin(dir.y) * Mathf.Rad2Deg;
+        angle.y = +Mathf.Asin(dir.y) * Mathf.Rad2Deg;
         angle.x = Mathf.Atan2(dir.x, dir.z) * Mathf.Rad2Deg;
     }
 
     Camera m_Camera;
+
+    float dt;
+    float fieldOfViewSpeed = 2.0f;
 
     Vector3 pivot;
     Vector2 angle;
@@ -84,9 +83,37 @@ public class OrbitCamera
 
     public void OnUpdate()
     {
+        dt = Mathf.Min(Time.deltaTime, 0.05f);
+        if (isSmoothTranslate)
+        {
+            movingTime += dt;
+
+            float t = movingTime / movingDuration;
+
+            m_Camera.transform.position = Vector3.Lerp(startPositon, endPositon, t);
+            m_Camera.transform.rotation = Quaternion.Slerp(startEular, endEular, t);
+
+            if (t >= 1f)
+            {
+                Vector3 forward = endEular * Vector3.forward;
+                Vector3 targetPivot;
+                if (RayToXZPlane(endPositon, forward, out targetPivot))
+                {
+                    pivot = targetPivot;
+                    distance = Vector3.Distance(targetPivot, endPositon);
+                    Vector3 dir = (endPositon - targetPivot).normalized;
+                    angle.y = -Mathf.Asin(dir.y) * Mathf.Rad2Deg;
+                    angle.x = Mathf.Atan2(dir.x, dir.z) * Mathf.Rad2Deg;
+                }
+
+                isSmoothTranslate = false;
+            }
+            return;
+        }
+
         if (isSmoothMoving)
         {
-            animationTime += Time.deltaTime;
+            animationTime += dt;
 
             float t = animationTime / animationDuration;
 
@@ -103,7 +130,7 @@ public class OrbitCamera
 
         float scroll = Mouse.current.scroll.ReadValue().y;
 
-        float deltaScrol = scroll * Time.deltaTime * 0.5f;
+        float deltaScrol = Mathf.Clamp(scroll * dt * fieldOfViewSpeed, -5f, 5f);
 
         float newDistance = distance - deltaScrol;
 
@@ -124,8 +151,8 @@ public class OrbitCamera
             isSmoothMoving = false;
 
             Vector3 delta = Mouse.current.delta.ReadValue();
-            angle.x += delta.x * Time.deltaTime * (7.5f + Mathf.Sqrt(distance) * 2f);
-            angle.y += delta.y * Time.deltaTime * (7.5f + Mathf.Sqrt(distance) * 2f);
+            angle.x += delta.x * dt * 3 * (7.5f + Mathf.Sqrt(distance) * 2f);
+            angle.y += delta.y * dt * 3 * (7.5f + Mathf.Sqrt(distance) * 2f);
 
             angle.x = Mathf.Repeat(angle.x, 360f);
             angle.y = Mathf.Clamp(angle.y, -80, 80);
@@ -136,7 +163,7 @@ public class OrbitCamera
 
             Vector2 delta = Mouse.current.delta.ReadValue();
 
-            float moveSpeed = Time.deltaTime * (1 + distance) * 0.75f;
+            float moveSpeed = dt * (1 + distance) * 0.75f;
 
             pivot -= m_Camera.transform.right * delta.x * moveSpeed;
             pivot -= m_Camera.transform.up * delta.y * moveSpeed;
@@ -147,8 +174,8 @@ public class OrbitCamera
 
     void UpdateCameraTransform()
     {
-        Quaternion rot = Quaternion.AngleAxis(angle.x, Vector3.up) *
-                             Quaternion.AngleAxis(angle.y, Vector3.right);
+        Quaternion rot = Quaternion.AngleAxis(angle.x, Vector3.up/*(0, 1, 0)*/) *
+                             Quaternion.AngleAxis(angle.y, Vector3.right/*(1, 0, 0)*/);
 
         Vector3 offset = rot * new Vector3(0, 0, distance);
         Vector3 cameraPos = pivot + offset;
@@ -180,5 +207,54 @@ public class OrbitCamera
         animationDuration = Mathf.Max(0.01f, duration);
 
         isSmoothMoving = true;
+    }
+
+    Vector3 startPositon;
+    Vector3 endPositon;
+    Quaternion startEular;
+    Quaternion endEular;
+    float movingTime;
+    float movingDuration;
+
+    bool isSmoothTranslate = false;
+    public void SmoothSetNewView(Vector3 cameraPos, Vector3 cameraRotate, float duration = 2f)
+    {
+        startPositon = m_Camera.transform.position;
+        endPositon = cameraPos;
+        startEular = m_Camera.transform.rotation;
+        endEular = Quaternion.Euler(FlattenEulerZ( cameraRotate));//cameraRotate;
+
+        movingTime = 0;
+        movingDuration = Mathf.Max(0.01f, duration);
+
+        isSmoothTranslate = true;
+    }
+    public static bool RayToXZPlane(Vector3 position, Vector3 forward, out Vector3 hitPoint)
+    {
+        if (Mathf.Approximately(forward.y, 0f))
+        {
+            hitPoint = default;
+            return false;
+        }
+
+        float t = -position.y / forward.y;
+        hitPoint = position + t * forward;
+        return true;
+    }
+
+    public static Vector3 FlattenEulerZ(Vector3 euler)
+    {
+        if (Mathf.Approximately(euler.z, 0f))
+            return euler;
+
+        Vector3 forward = Quaternion.Euler(euler) * Vector3.forward;
+
+        Vector3 upRef = Mathf.Abs(Vector3.Dot(forward, Vector3.up)) > 0.9999f ? Vector3.forward : Vector3.up;
+
+        Vector3 result = Quaternion.LookRotation(forward, upRef).eulerAngles;
+
+        result.z = 0f;
+
+        return result;
     }
 }
